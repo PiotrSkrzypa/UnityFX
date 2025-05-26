@@ -13,10 +13,11 @@ namespace PSkrzypa.UnityFX
     {
         [SerializeField] SequencePlayMode playMode = SequencePlayMode.Parallel;
         public bool CanPlayWhenAlreadyPlaying;
-        FXTiming IFXComponent.Timing => Timing;
-        public FXSequenceTiming Timing;
+        FXTiming IFXComponent.Timing => SequenceTiming;
+        public FXSequenceTiming SequenceTiming;
         [SerializeField][SerializeReference] IFXComponent[] components;
         public IFXComponent[] Components { get => components; }
+        public SequencePlayMode PlayMode { get => playMode; }
 
         public UnityEvent OnPlay;
         public UnityEvent OnCompleted;
@@ -44,6 +45,7 @@ namespace PSkrzypa.UnityFX
             }
             cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
+            SequenceTiming.RecalculateDuration(components, playMode);
             await Play(token);
         }
         public async UniTask Play(CancellationToken token = default)
@@ -52,9 +54,9 @@ namespace PSkrzypa.UnityFX
             {
                 OnPlay?.Invoke();
                 SetState(FXPlaybackStateID.WaitingToStart);
-                await UniTask.Delay((int)( Timing.InitialDelay * 1000 ), cancellationToken: token);
+                await UniTask.Delay((int)( SequenceTiming.InitialDelay * 1000 ), cancellationToken: token);
 
-                int repeatCount = Timing.RepeatForever ? int.MaxValue : Mathf.Max(1, Timing.NumberOfRepeats);
+                int repeatCount = SequenceTiming.RepeatForever ? int.MaxValue : Mathf.Max(1, SequenceTiming.NumberOfRepeats);
                 for (int i = 0; i < repeatCount; i++)
                 {
                     SetState(FXPlaybackStateID.Playing);
@@ -72,18 +74,18 @@ namespace PSkrzypa.UnityFX
                     if (i < repeatCount - 1)
                     {
                         SetState(FXPlaybackStateID.RepeatingDelay);
-                        await UniTask.Delay((int)( Timing.DelayBetweenRepeats * 1000 ),
-                            Timing.TimeScaleIndependent ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime,
+                        await UniTask.Delay((int)( SequenceTiming.DelayBetweenRepeats * 1000 ),
+                            SequenceTiming.TimeScaleIndependent ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime,
                             cancellationToken: token);
                     }
                 }
                 SetState(FXPlaybackStateID.Completed);
                 OnCompleted?.Invoke();
-                if (Timing.CooldownDuration > 0)
+                if (SequenceTiming.CooldownDuration > 0)
                 {
                     SetState(FXPlaybackStateID.Cooldown);
-                    await UniTask.Delay((int)( Timing.CooldownDuration * 1000 ),
-                        Timing.TimeScaleIndependent ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime,
+                    await UniTask.Delay((int)( SequenceTiming.CooldownDuration * 1000 ),
+                        SequenceTiming.TimeScaleIndependent ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime,
                         cancellationToken: token);
                 }
                 SetState(FXPlaybackStateID.Idle);

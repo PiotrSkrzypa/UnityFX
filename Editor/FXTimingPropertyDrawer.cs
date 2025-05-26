@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -13,7 +16,7 @@ namespace PSkrzypa.UnityFX.Editor
         {
             VisualElement root = new VisualElement();
             visualTree.CloneTree(root);
-            BindField<FloatField>(root, property, "Duration");
+            FloatField durationField = BindField<FloatField>(root, property, "Duration");
             BindField<FloatField>(root, property, "InitialDelay");
             BindField<FloatField>(root, property, "CooldownDuration");
             BindField<FloatField>(root, property, "DelayBetweenRepeats");
@@ -41,6 +44,15 @@ namespace PSkrzypa.UnityFX.Editor
                 {
                     numberOfRepeatsField.SetEnabled(!evt.newValue);
                 });
+            }
+            if(property.type == "FXSequenceTiming")
+            {
+                durationField.SetEnabled(false);
+                var parent = GetParentObject(property); // This will be FXSequence
+                if (parent is FXSequence sequence)
+                {
+                    sequence.SequenceTiming.RecalculateDuration(sequence.Components, sequence.PlayMode);
+                }
             }
             return root;
         }
@@ -71,6 +83,37 @@ namespace PSkrzypa.UnityFX.Editor
                 if (!Mathf.Approximately(evt.newValue, clamped))
                     duration.value = clamped;
             });
+        }
+        private object GetParentObject(SerializedProperty property)
+        {
+            string path = property.propertyPath.Replace(".Array.data[", "[");
+            object obj = property.serializedObject.targetObject;
+            var elements = path.Split('.');
+
+            foreach (var element in elements.Take(elements.Length - 1))
+            {
+                if (element.Contains("["))
+                {
+                    string fieldName = element.Substring(0, element.IndexOf("["));
+                    int index = int.Parse(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
+                    var list = GetValue(obj, fieldName) as IList;
+                    obj = list?[index];
+                }
+                else
+                {
+                    obj = GetValue(obj, element);
+                }
+            }
+
+            return obj;
+        }
+
+        private object GetValue(object source, string name)
+        {
+            if (source == null) return null;
+            var type = source.GetType();
+            var field = type.GetField(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            return field?.GetValue(source);
         }
     }
 
