@@ -14,7 +14,7 @@ namespace PSkrzypa.UnityFX
 
         public bool TimeScaleIndependent;
 
-        public int NumberOfRepeats;
+        public int NumberOfRepeats = 1;
         public bool RepeatForever;
         public float DelayBetweenRepeats;
 

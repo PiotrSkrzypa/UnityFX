@@ -11,13 +11,11 @@ namespace PSkrzypa.UnityFX
     [Serializable]
     public  class FXSequence : IFXComponent
     {
-        [SerializeField] SequencePlayMode playMode = SequencePlayMode.Parallel;
         public bool CanPlayWhenAlreadyPlaying;
         FXTiming IFXComponent.Timing => SequenceTiming;
         public FXSequenceTiming SequenceTiming;
         [SerializeField][SerializeReference] IFXComponent[] components;
         public IFXComponent[] Components { get => components; }
-        public SequencePlayMode PlayMode { get => playMode; }
 
         public UnityEvent OnPlay;
         public UnityEvent OnCompleted;
@@ -45,7 +43,7 @@ namespace PSkrzypa.UnityFX
             }
             cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
-            SequenceTiming.RecalculateDuration(components, playMode);
+            SequenceTiming.RecalculateDuration(components);
             await Play(token);
         }
         public async UniTask Play(CancellationToken token = default)
@@ -60,7 +58,7 @@ namespace PSkrzypa.UnityFX
                 for (int i = 0; i < repeatCount; i++)
                 {
                     SetState(FXPlaybackStateID.Playing);
-                    switch (playMode)
+                    switch (SequenceTiming.PlayMode)
                     {
                         case SequencePlayMode.Sequential:
                             await PlaySequential(token);
@@ -93,7 +91,6 @@ namespace PSkrzypa.UnityFX
             catch (OperationCanceledException)
             {
                 Debug.LogWarning($"[FX] {this} was cancelled.");
-                throw;
             }
             finally
             {
@@ -104,35 +101,50 @@ namespace PSkrzypa.UnityFX
         }
         private async UniTask PlayParallel(CancellationToken cancellationToken)
         {
-            if (components != null)
+            try
             {
-                List<UniTask> tasks = new List<UniTask>();
-                for (int i = 0; i < components.Length; i++)
+                if (components != null)
                 {
-                    components[i].Initialize();
-                    UniTask task = components[i].Play();
-                    if (components[i].Timing.ContributeToTotalDuration)
+                    List<UniTask> tasks = new List<UniTask>();
+                    for (int i = 0; i < components.Length; i++)
                     {
-                        tasks.Add(task);
+                        components[i].Initialize();
+                        UniTask task = components[i].Play();
+                        if (components[i].Timing.ContributeToTotalDuration)
+                        {
+                            tasks.Add(task);
+                        }
                     }
+                    await UniTask.WhenAll(tasks);
+                    OnCompleted?.Invoke();
                 }
-                await UniTask.WhenAll(tasks);
-                OnCompleted?.Invoke();
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning($"[FX] {this} was cancelled.");
             }
         }
 
         private async UniTask PlaySequential(CancellationToken cancellationToken)
         {
-            if (components != null)
+            try
             {
-                List<UniTask> tasks = new List<UniTask>();
-                for (int i = 0; i < components.Length; i++)
+                if (components != null)
                 {
-                    components[i].Initialize();
-                    UniTask task = components[i].Play().AttachExternalCancellation(cancellationToken);
-                    await task;
+                    List<UniTask> tasks = new List<UniTask>();
+                    for (int i = 0; i < components.Length; i++)
+                    {
+                        components[i].Initialize();
+                        UniTask task = components[i].Play().AttachExternalCancellation(cancellationToken);
+                        await task;
+                    }
+                    OnCompleted?.Invoke();
                 }
-                OnCompleted?.Invoke();
+            }
+            catch (OperationCanceledException)
+            {
+
+                Debug.LogWarning($"[FX] {this} was cancelled.");
             }
         }
         [Button]
@@ -143,31 +155,31 @@ namespace PSkrzypa.UnityFX
                 return;
             }
 
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = null;
             for (int i = 0; i < components.Length; i++)
             {
                 components[i].Stop();
             }
-            cts?.Cancel();
-            cts?.Dispose();
-            cts = null;
             SetState(FXPlaybackStateID.Idle);
             OnCancelled?.Invoke();
         }
         [Button]
         public void Reset()
         {
-            if (!SetState(FXPlaybackStateID.Cancelled) || components == null)
+            if (components == null)
             {
                 return;
-            }
-            for (int i = 0; i < components.Length; i++)
-            {
-                components[i].Reset();
             }
             cts?.Cancel();
             cts?.Dispose();
             cts = null;
-            SetState(FXPlaybackStateID.Idle);
+            for (int i = 0; i < components.Length; i++)
+            {
+                components[i].Reset();
+            }
+            stateMachine.ForceSet(FXPlaybackStateID.Idle);
         }
         private bool SetState(FXPlaybackStateID newState)
         {

@@ -87,13 +87,9 @@ namespace PSkrzypa.UnityFX
         [Button]
         public void Reset()
         {
-            if (!SetState(FXPlaybackStateID.Cancelled))
-            {
-                return;
-            }
             CancellationTokenCleanUp();
             ResetInternal();
-            SetState(FXPlaybackStateID.Idle);
+            stateMachine.ForceSet(FXPlaybackStateID.Idle);
         }
         protected virtual void ResetInternal()
         {

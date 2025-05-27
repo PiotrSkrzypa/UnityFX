@@ -6,16 +6,19 @@ namespace PSkrzypa.UnityFX
     [Serializable]
     public class FXSequenceTiming : FXTiming
     {
+        [SerializeField] SequencePlayMode playMode = SequencePlayMode.Parallel;
+        public SequencePlayMode PlayMode { get => playMode; }
         [SerializeField]private float computedDuration;
 
         public float ComputedDuration { get => computedDuration; }
 
-        public void RecalculateDuration(IFXComponent[] components, SequencePlayMode mode)
+        public void RecalculateDuration(IFXComponent[] components)
         {
             float result = 0f;
 
             foreach (var comp in components)
             {
+                if (comp == null) continue;
                 var timing = comp.Timing;
                 if (timing == null) continue;
 
@@ -30,7 +33,7 @@ namespace PSkrzypa.UnityFX
                     compDuration = ( compDuration + timing.DelayBetweenRepeats ) * Mathf.Max(1, timing.NumberOfRepeats);
                 }
 
-                switch (mode)
+                switch (playMode)
                 {
                     case SequencePlayMode.Parallel:
                         result = Mathf.Max(result, compDuration);

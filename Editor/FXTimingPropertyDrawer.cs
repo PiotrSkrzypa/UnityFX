@@ -8,31 +8,37 @@ using UnityEngine.UIElements;
 
 namespace PSkrzypa.UnityFX.Editor
 {
-	[CustomPropertyDrawer(typeof(FXTiming), true)]
-	public class FXTimingPropertyDrawer : PropertyDrawer
-	{
-		public VisualTreeAsset visualTree;
+    [CustomPropertyDrawer(typeof(FXTiming), true)]
+    public class FXTimingPropertyDrawer : PropertyDrawer
+    {
+        public VisualTreeAsset visualTree;
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             VisualElement root = new VisualElement();
             visualTree.CloneTree(root);
             FloatField durationField = BindField<FloatField>(root, property, "Duration");
-            BindField<FloatField>(root, property, "InitialDelay");
-            BindField<FloatField>(root, property, "CooldownDuration");
-            BindField<FloatField>(root, property, "DelayBetweenRepeats");
-            var numberOfRepeats = BindField<IntegerField>(root, property, "NumberOfRepeats");
-            BindField<Toggle>(root, property, "ContributeToTotalDuration");
-            var repeatForever = BindField<Toggle>(root, property, "RepeatForever");
+            FloatField initialDelayField = BindField<FloatField>(root, property, "InitialDelay");
+            FloatField cooldownDurationField = BindField<FloatField>(root, property, "CooldownDuration");
+            FloatField delayBetweenRepeatsField = BindField<FloatField>(root, property, "DelayBetweenRepeats");
+            IntegerField numberOfRepeatsField = BindField<IntegerField>(root, property, "NumberOfRepeats");
+            Toggle contributeToTotalDurationToggle = BindField<Toggle>(root, property, "ContributeToTotalDuration");
+            Toggle repeatForeverField = BindField<Toggle>(root, property, "RepeatForever");
             BindField<Toggle>(root, property, "TimeScaleIndependent");
-           
+            if (property.type == "FXSequenceTiming")
+            {
+                durationField.SetEnabled(false);
+                var field = new PropertyField(property.FindPropertyRelative("playMode"));
+                field.name = "playMode";
+                field.RegisterValueChangeCallback(_ => OnTimingModified(property));
+                root.Insert(0, field);
+            }
+
             ClampFloat(root, "Duration");
             ClampFloat(root, "InitialDelay");
             ClampFloat(root, "CooldownDuration");
             ClampFloat(root, "DelayBetweenRepeats");
             ClampInt(root, "NumberOfRepeats");
 
-            var numberOfRepeatsField = numberOfRepeats;
-            var repeatForeverField = repeatForever;
 
             if (repeatForeverField != null && numberOfRepeatsField != null)
             {
@@ -45,17 +51,50 @@ namespace PSkrzypa.UnityFX.Editor
                     numberOfRepeatsField.SetEnabled(!evt.newValue);
                 });
             }
-            if(property.type == "FXSequenceTiming")
+            durationField.RegisterValueChangedCallback(evt =>
             {
-                durationField.SetEnabled(false);
-                var parent = GetParentObject(property); // This will be FXSequence
-                if (parent is FXSequence sequence)
-                {
-                    sequence.SequenceTiming.RecalculateDuration(sequence.Components, sequence.PlayMode);
-                }
-            }
+                OnTimingModified(property);
+            });
+            initialDelayField.RegisterValueChangedCallback(evt =>
+            {
+                OnTimingModified(property);
+            });
+            cooldownDurationField.RegisterValueChangedCallback(evt =>
+            {
+                OnTimingModified(property);
+            });
+            delayBetweenRepeatsField.RegisterValueChangedCallback(evt =>
+            {
+                OnTimingModified(property);
+            });
+            numberOfRepeatsField.RegisterValueChangedCallback(evt =>
+            {
+                OnTimingModified(property);
+            });
+            contributeToTotalDurationToggle.RegisterValueChangedCallback(evt =>
+            {
+                OnTimingModified(property);
+            });
             return root;
         }
+
+        private static void OnTimingModified(SerializedProperty property)
+        {
+            var sequence = SerializedPropertyUtility.GetParentOfType<FXSequence>(property);
+            if (sequence != null)
+            {
+                float previousDuration = sequence.SequenceTiming?.Duration ?? 0f;
+                sequence.SequenceTiming?.RecalculateDuration(sequence.Components);
+                float newDuration = sequence.SequenceTiming?.Duration ?? 0f;
+#if UNITY_EDITOR
+                if (previousDuration != newDuration)
+                {
+                    UnityEditor.EditorUtility.SetDirty(property.serializedObject.targetObject);
+                }
+#endif
+            }
+        }
+
         private T BindField<T>(VisualElement root, SerializedProperty parent, string fieldName)
     where T : BindableElement
         {
@@ -83,29 +122,6 @@ namespace PSkrzypa.UnityFX.Editor
                 if (!Mathf.Approximately(evt.newValue, clamped))
                     duration.value = clamped;
             });
-        }
-        private object GetParentObject(SerializedProperty property)
-        {
-            string path = property.propertyPath.Replace(".Array.data[", "[");
-            object obj = property.serializedObject.targetObject;
-            var elements = path.Split('.');
-
-            foreach (var element in elements.Take(elements.Length - 1))
-            {
-                if (element.Contains("["))
-                {
-                    string fieldName = element.Substring(0, element.IndexOf("["));
-                    int index = int.Parse(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
-                    var list = GetValue(obj, fieldName) as IList;
-                    obj = list?[index];
-                }
-                else
-                {
-                    obj = GetValue(obj, element);
-                }
-            }
-
-            return obj;
         }
 
         private object GetValue(object source, string name)
