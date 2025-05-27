@@ -9,7 +9,7 @@ using Alchemy.Inspector;
 namespace PSkrzypa.UnityFX
 {
     [Serializable]
-    public  class FXSequence : IFXComponent
+    public class FXSequence : IFXComponent
     {
         public bool CanPlayWhenAlreadyPlaying;
         FXTiming IFXComponent.Timing => SequenceTiming;
@@ -101,50 +101,35 @@ namespace PSkrzypa.UnityFX
         }
         private async UniTask PlayParallel(CancellationToken cancellationToken)
         {
-            try
+
+            if (components != null)
             {
-                if (components != null)
+                List<UniTask> tasks = new List<UniTask>();
+                for (int i = 0; i < components.Length; i++)
                 {
-                    List<UniTask> tasks = new List<UniTask>();
-                    for (int i = 0; i < components.Length; i++)
+                    components[i].Initialize();
+                    UniTask task = components[i].Play();
+                    if (components[i].Timing.ContributeToTotalDuration)
                     {
-                        components[i].Initialize();
-                        UniTask task = components[i].Play();
-                        if (components[i].Timing.ContributeToTotalDuration)
-                        {
-                            tasks.Add(task);
-                        }
+                        tasks.Add(task);
                     }
-                    await UniTask.WhenAll(tasks);
-                    OnCompleted?.Invoke();
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                Debug.LogWarning($"[FX] {this} was cancelled.");
+                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
             }
         }
 
         private async UniTask PlaySequential(CancellationToken cancellationToken)
         {
-            try
+            if (components != null)
             {
-                if (components != null)
+                List<UniTask> tasks = new List<UniTask>();
+                for (int i = 0; i < components.Length; i++)
                 {
-                    List<UniTask> tasks = new List<UniTask>();
-                    for (int i = 0; i < components.Length; i++)
-                    {
-                        components[i].Initialize();
-                        UniTask task = components[i].Play().AttachExternalCancellation(cancellationToken);
-                        await task;
-                    }
-                    OnCompleted?.Invoke();
+                    components[i].Initialize();
+                    UniTask task = components[i].Play().AttachExternalCancellation(cancellationToken);
+                    await task;
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
-            }
-            catch (OperationCanceledException)
-            {
-
-                Debug.LogWarning($"[FX] {this} was cancelled.");
             }
         }
         [Button]

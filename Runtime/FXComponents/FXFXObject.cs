@@ -12,8 +12,7 @@ namespace PSkrzypa.UnityFX
 
         protected override async UniTask PlayInternal(CancellationToken cancellationToken)
         {
-            await UniTask.Yield();
-            fxObject.Play();
+            await fxObject.Play(cancellationToken);
         }
     }
 }

@@ -3,6 +3,7 @@ using Alchemy.Inspector;
 using UnityEngine.Events;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace PSkrzypa.UnityFX
 {
@@ -76,6 +77,27 @@ namespace PSkrzypa.UnityFX
                     }
                 }
                 await UniTask.WhenAll(tasks);
+                OnCompleted?.Invoke();
+            }
+        }
+        public async UniTask Play(CancellationToken cancellationToken)
+        {
+            if (components != null)
+            {
+                IsPlaying = true;
+                OnPlay?.Invoke();
+                List<UniTask> tasks = new List<UniTask>();
+                for (int i = 0; i < components.Length; i++)
+                {
+                    components[i].Initialize();
+                    UniTask task = components[i].Play();
+                    if (components[i].Timing.ContributeToTotalDuration)
+                    {
+                        tasks.Add(task);
+                    }
+                }
+                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 OnCompleted?.Invoke();
             }
         }
