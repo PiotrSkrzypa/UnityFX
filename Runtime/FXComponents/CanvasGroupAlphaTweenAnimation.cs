@@ -17,7 +17,9 @@ namespace PSkrzypa.UnityFX
         protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            var handle = LMotion.Create(startAlpha, targetAlpha, calculatedDuration)
+            float fromAlpha = inheritedSpeed > 0 ? startAlpha : targetAlpha;
+            float toAlpha = inheritedSpeed > 0 ? targetAlpha : startAlpha;
+            var handle = LMotion.Create(fromAlpha, toAlpha, calculatedDuration)
                 .WithEase(LitMotion.Ease.OutQuad).WithScheduler(Timing.GetScheduler())
                 .BindToAlpha(targetCanvasGroup);
             await handle.ToUniTask(cancellationToken);

@@ -32,8 +32,9 @@ namespace PSkrzypa.UnityFX
                 targetTransform.localPosition = startingPosition;
             else
                 targetTransform.position = startingPosition;
-
-            await LMotion.Create(0f, 1f, calculatedDuration)
+            float from = inheritedSpeed > 0 ? 0f : 1f;
+            float to = inheritedSpeed > 0 ? 1f : 0f;
+            await LMotion.Create(from, to, calculatedDuration)
                 .WithScheduler(Timing.GetScheduler())
                 .WithEase(easeType)
                 .Bind(t =>

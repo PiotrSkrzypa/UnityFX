@@ -13,13 +13,18 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private Vector3 targetScale;
         Vector3 originalScale;
 
+        public override void Initialize()
+        {
+            originalScale = transformToScale.localScale;
+        }
         protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             var scheduler = Timing.GetScheduler();
 
-            originalScale = transformToScale.localScale;
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            UniTask uniTask = LMotion.Create(originalScale, targetScale, calculatedDuration)
+            Vector3 fromScale = inheritedSpeed > 0 ? originalScale : targetScale;
+            Vector3 toScale = inheritedSpeed > 0 ? targetScale : originalScale;
+            UniTask uniTask = LMotion.Create(fromScale, toScale, calculatedDuration)
                 .WithScheduler(scheduler)
                 .Bind(transformToScale, (v, tr) => transformToScale.localScale = v)
                 .ToUniTask(cancellationToken);

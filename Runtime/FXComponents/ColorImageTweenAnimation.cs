@@ -18,7 +18,9 @@ namespace PSkrzypa.UnityFX
         protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            var handle = LMotion.Create(startColor, targetColor, calculatedDuration)
+            Color fromColor = inheritedSpeed > 0 ? startColor : targetColor;
+            Color toColor = inheritedSpeed > 0 ? targetColor : startColor;
+            var handle = LMotion.Create(fromColor, toColor, calculatedDuration)
                 .WithEase(Ease.OutQuad)
                 .WithScheduler(Timing.GetScheduler())
                 .BindToColor(imageToColor);

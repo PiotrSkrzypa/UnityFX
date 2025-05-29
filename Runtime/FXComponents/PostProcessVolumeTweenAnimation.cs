@@ -23,11 +23,13 @@ namespace PSkrzypa.UnityFX
                 return;
             }
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            volume.weight = startWeight;
+            float fromWeight = inheritedSpeed > 0 ? startWeight : targetWeight;
+            float toWeight = inheritedSpeed > 0 ? targetWeight : startWeight;
+            volume.weight = fromWeight;
 
             var scheduler = Timing.GetScheduler();
 
-            var tween = LMotion.Create(startWeight, targetWeight, calculatedDuration)
+            var tween = LMotion.Create(fromWeight, toWeight, calculatedDuration)
                 .WithEase(ease)
                 .WithScheduler(scheduler)
                 .Bind(volume, (x, v) => v.weight = x);

@@ -37,6 +37,8 @@ namespace PSkrzypa.UnityFX
 
             Add(FXPlaybackStateID.Cancelled, FXPlaybackStateID.Rewinding);
             Add(FXPlaybackStateID.Rewinding, FXPlaybackStateID.Completed);
+            Add(FXPlaybackStateID.Rewinding, FXPlaybackStateID.RepeatingDelay);
+            Add(FXPlaybackStateID.RepeatingDelay, FXPlaybackStateID.Rewinding);
 
         }
 

@@ -19,11 +19,19 @@ namespace PSkrzypa.UnityFX
             if (transformToMove == null)
                 return;
 
-            ResetPosition();
-
+            Vector3 fromPosition = inheritedSpeed > 0 ? startingPosition : targetPosition;
+            Vector3 toPosition = inheritedSpeed > 0 ? targetPosition : startingPosition;
+            if (useLocalSpace)
+            {
+                transformToMove.localPosition = fromPosition;
+            }
+            else
+            {
+                transformToMove.position = fromPosition;
+            }
             var scheduler = Timing.GetScheduler();
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            var morionBuilder = LMotion.Create(startingPosition, targetPosition, calculatedDuration)
+            var morionBuilder = LMotion.Create(fromPosition, toPosition, calculatedDuration)
                     .WithEase(Ease.OutQuad)
                     .WithScheduler(scheduler);
             var handle = useLocalSpace ? morionBuilder.Bind(transformToMove, (x, t) => t.localPosition = x) :

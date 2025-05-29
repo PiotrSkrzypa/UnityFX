@@ -85,7 +85,20 @@ namespace PSkrzypa.UnityFX
                     throw;
 
                 SetState(FXPlaybackStateID.Rewinding);
-                await Reverse(inheritedSpeed * reverseSpeedMultiplier);  // reverse should work only on current loop, rest of loop will be played wit PlayInternal with modifiedSpeed
+                Timing.PlayCount--;
+
+                float effectiveReverseSpeed = inheritedSpeed * reverseSpeedMultiplier;
+                await Reverse(effectiveReverseSpeed);
+                float calculatedDelayBetweenRepeats = Timing.DelayBetweenRepeats / Mathf.Abs(effectiveReverseSpeed);
+                while (Timing.PlayCount > 0)
+                {
+                    SetState(FXPlaybackStateID.RepeatingDelay);
+                    await UniTask.Delay((int)( calculatedDelayBetweenRepeats * 1000 ),
+                        Timing.TimeScaleIndependent ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime);
+                    SetState(FXPlaybackStateID.Playing);
+                    await Play(effectiveReverseSpeed);
+                    Timing.PlayCount--;
+                }
                 SetState(FXPlaybackStateID.Completed);
                 SetState(FXPlaybackStateID.Idle);
             }
