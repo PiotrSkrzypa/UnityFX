@@ -13,12 +13,13 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private List<Renderer> meshRenderers;
         [SerializeField][SerializeReference] private List<MaterialPropertyBlockParameter> parametersToAnimate;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             if (meshRenderers == null || parametersToAnimate == null) return;
 
             List<UniTask> allTasks = new();
 
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             foreach (var renderer in meshRenderers)
             {
                 MaterialPropertyBlock block = new MaterialPropertyBlock();
@@ -29,19 +30,19 @@ namespace PSkrzypa.UnityFX
                 foreach (var param in parametersToAnimate)
                 {
                     param.SetDefaultValue(rendererTmp, block);
-                    sequence.Join(param.CreateMotion(block, Timing.Duration, Timing.TimeScaleIndependent));
+                    sequence.Join(param.CreateMotion(block, calculatedDuration, Timing.TimeScaleIndependent));
                 }
-                sequence.Append(LMotion.Create(0f, 1f, Timing.Duration)
+                sequence.Append(LMotion.Create(0f, 1f, calculatedDuration)
                     .WithScheduler(Timing.GetScheduler())
                     .WithEase(Ease.OutQuad)
                     .Bind(block, (x, block) => rendererTmp.SetPropertyBlock(block)));
                 allTasks.Add(sequence.Run().ToUniTask(cancellationToken));
             }
-            try
-            {
-                await UniTask.WhenAll(allTasks);
-            }
-            catch (OperationCanceledException) { }
+            await UniTask.WhenAll(allTasks);
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            
         }
         protected override void StopInternal()
         {

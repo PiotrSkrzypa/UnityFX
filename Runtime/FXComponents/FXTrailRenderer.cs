@@ -14,7 +14,12 @@ namespace PSkrzypa.UnityFX
         {
             trailRenderer.emitting = false;
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        {
+            await UniTask.Yield();
+            trailRenderer.emitting = true;
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1f)
         {
             await UniTask.Yield();
             trailRenderer.emitting = true;

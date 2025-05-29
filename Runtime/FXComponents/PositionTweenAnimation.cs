@@ -14,7 +14,7 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private Vector3 startingPosition;
         [SerializeField] private Vector3 targetPosition;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             if (transformToMove == null)
                 return;
@@ -22,14 +22,30 @@ namespace PSkrzypa.UnityFX
             ResetPosition();
 
             var scheduler = Timing.GetScheduler();
-
-            var morionBuilder = LMotion.Create(startingPosition, targetPosition, Timing.Duration)
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            var morionBuilder = LMotion.Create(startingPosition, targetPosition, calculatedDuration)
                     .WithEase(Ease.OutQuad)
                     .WithScheduler(scheduler);
             var handle = useLocalSpace ? morionBuilder.Bind(transformToMove, (x, t) => t.localPosition = x) :
                     morionBuilder.Bind(transformToMove, (x, t) => t.position = x);
 
             await handle.ToUniTask(cancellationToken);
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1f)
+        {
+            if (transformToMove == null)
+                return;
+
+            Vector3 currentPosition = useLocalSpace ? transformToMove.localPosition : transformToMove.position;
+            var scheduler = Timing.GetScheduler();
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            var morionBuilder = LMotion.Create(currentPosition, startingPosition, calculatedDuration)
+                    .WithEase(Ease.OutQuad)
+                    .WithScheduler(scheduler);
+            var handle = useLocalSpace ? morionBuilder.Bind(transformToMove, (x, t) => t.localPosition = x) :
+                    morionBuilder.Bind(transformToMove, (x, t) => t.position = x);
+
+            await handle.ToUniTask();
         }
         private void ResetPosition()
         {

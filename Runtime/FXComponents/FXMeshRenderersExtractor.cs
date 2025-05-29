@@ -16,7 +16,7 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Transform volumeCenter;
         List<Renderer> foundRenderers;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             foundRenderers = new List<Renderer>();
             Collider[] colliders = Physics.OverlapBox(volumeCenter.position + volumeCenterOffset, volumeSize / 2f, Quaternion.identity, layerMask);
@@ -37,7 +37,7 @@ namespace PSkrzypa.UnityFX
             {
                 return;
             }
-            IFXComponent[] fxComponents = fXObject.Components;
+            IFXComponent[] fxComponents = fXObject.Sequence.Components;
             for (int i = 0; i < fxComponents.Length; i++)
             {
                 IFXComponent fXComponent = fxComponents[i];
@@ -51,6 +51,10 @@ namespace PSkrzypa.UnityFX
         {
             List <Renderer> result = new List<Renderer>(foundRenderers);
             return result;
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            await UniTask.CompletedTask;
         }
     }
 }

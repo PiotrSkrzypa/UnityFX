@@ -19,13 +19,13 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private Vector3 punch;
         Vector3 originalRotation;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             var scheduler = Timing.GetScheduler();
-
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             originalRotation = useLocalSpace ? transformToRotate.localEulerAngles : transformToRotate.eulerAngles;
 
-            var motionBuilder = LMotion.Punch.Create(originalRotation, punch, Timing.Duration)
+            var motionBuilder = LMotion.Punch.Create(originalRotation, punch, calculatedDuration)
                             .WithFrequency(frequency)
                             .WithDampingRatio(damping)
                             .WithScheduler(scheduler);
@@ -34,6 +34,22 @@ namespace PSkrzypa.UnityFX
                 .ToUniTask(cancellationToken) :
                motionBuilder.Bind(transformToRotate, (v, tr) => transformToRotate.eulerAngles = v)
                 .ToUniTask(cancellationToken);
+
+            await uniTask;
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            var scheduler = Timing.GetScheduler();
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            var motionBuilder = LMotion.Punch.Create(originalRotation, punch, calculatedDuration)
+                            .WithFrequency(frequency)
+                            .WithDampingRatio(damping)
+                            .WithScheduler(scheduler);
+            UniTask uniTask = useLocalSpace ?
+                motionBuilder.Bind(transformToRotate, (v, tr) => transformToRotate.localEulerAngles = v)
+                .ToUniTask() :
+               motionBuilder.Bind(transformToRotate, (v, tr) => transformToRotate.eulerAngles = v)
+                .ToUniTask();
 
             await uniTask;
         }

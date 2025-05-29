@@ -15,14 +15,26 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Color startColor;
         [SerializeField] Color targetColor;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
-            var handle = LMotion.Create(startColor, targetColor, Timing.Duration)
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            var handle = LMotion.Create(startColor, targetColor, calculatedDuration)
                 .WithEase(Ease.OutQuad)
                 .WithScheduler(Timing.GetScheduler())
                 .BindToColor(textToColor);
 
             await handle.ToUniTask(cancellationToken);
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            Color currentColor = textToColor.color;
+            var handle = LMotion.Create(currentColor, startColor, calculatedDuration)
+                .WithEase(Ease.OutQuad)
+                .WithScheduler(Timing.GetScheduler())
+                .BindToColor(textToColor);
+
+            await handle.ToUniTask();
         }
 
         protected override void StopInternal()

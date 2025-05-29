@@ -2,7 +2,10 @@
     <Style src="project://database/Assets/UnityFX/Editor/FXTimingPropertyDrawer.uss?fileID=7433441132597879392&amp;guid=6ae0abe6cc6f3394d89f60c91cfa62b2&amp;type=3#FXTimingPropertyDrawer" />
     <ui:VisualElement style="flex-grow: 1;">
         <ui:Foldout text="Timing">
-            <ui:Toggle label="Timescale Independent" name="TimeScaleIndependent" data-source-path="TimeScaleIndependent" data-source-type="PSkrzypa.UnityFX.FXTiming, UnityFX" />
+            <ui:GroupBox>
+                <ui:Toggle label="Timescale Independent" name="TimeScaleIndependent" data-source-path="TimeScaleIndependent" data-source-type="PSkrzypa.UnityFX.FXTiming, UnityFX" />
+                <ui:FloatField label="Playback Speed" value="1" name="PlaybackSpeed" />
+            </ui:GroupBox>
             <ui:GroupBox>
                 <ui:FloatField label="Duration" value="0" name="Duration" auto-correction="false" data-source-type="PSkrzypa.UnityFX.FXTiming, UnityFX" data-source-path="Duration" />
                 <ui:FloatField label="Initial Delay" value="0" name="InitialDelay" data-source-path="InitialDelay" data-source-type="PSkrzypa.UnityFX.FXTiming, UnityFX" />

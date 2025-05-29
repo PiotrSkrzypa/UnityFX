@@ -15,7 +15,12 @@ namespace PSkrzypa.UnityFX
         public void RecalculateDuration(IFXComponent[] components)
         {
             float result = 0f;
-
+            if(components == null)
+            {
+                computedDuration = 0;
+                Duration = computedDuration;
+                return;
+            }
             foreach (var comp in components)
             {
                 if (comp == null) continue;

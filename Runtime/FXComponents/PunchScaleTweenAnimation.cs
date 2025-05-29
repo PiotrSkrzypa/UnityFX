@@ -16,31 +16,34 @@ namespace PSkrzypa.UnityFX
 
         private Vector3 originalScale;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
-            if (transformToScale == null)
-            {
-                Debug.LogWarning("[PunchScaleTweenAnimation] Transform to scale is null.");
-                return;
-            }
-
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             originalScale = transformToScale.localScale;
 
             var scheduler = Timing.GetScheduler();
 
-            try
-            {
-                var punchTween = LMotion.Punch.Create(originalScale, punch, Timing.Duration)
+            var punchTween = LMotion.Punch.Create(originalScale, punch, calculatedDuration)
                     .WithFrequency(frequency)
                     .WithDampingRatio(damping)
                     .WithScheduler(scheduler)
                     .Bind(transformToScale, (v, t) => t.localScale = v);
 
-                await punchTween.ToUniTask(cancellationToken);
-            }
-            catch (OperationCanceledException) { }
+            await punchTween.ToUniTask(cancellationToken);
         }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            var scheduler = Timing.GetScheduler();
 
+            var punchTween = LMotion.Punch.Create(originalScale, punch, calculatedDuration)
+                    .WithFrequency(frequency)
+                    .WithDampingRatio(damping)
+                    .WithScheduler(scheduler)
+                    .Bind(transformToScale, (v, t) => t.localScale = v);
+
+            await punchTween.ToUniTask();
+        }
         protected override void StopInternal()
         {
             if (transformToScale != null)

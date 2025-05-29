@@ -22,13 +22,21 @@ namespace PSkrzypa.UnityFX
             Add(FXPlaybackStateID.Playing, FXPlaybackStateID.Completed);
 
             Add(FXPlaybackStateID.Cooldown, FXPlaybackStateID.Idle);
-            Add(FXPlaybackStateID.Cancelled, FXPlaybackStateID.Idle);
+            Add(FXPlaybackStateID.Stopped, FXPlaybackStateID.Idle);
             Add(FXPlaybackStateID.Completed, FXPlaybackStateID.Idle);
+
+            Add(FXPlaybackStateID.WaitingToStart, FXPlaybackStateID.Stopped);
+            Add(FXPlaybackStateID.Playing, FXPlaybackStateID.Stopped);
+            Add(FXPlaybackStateID.RepeatingDelay, FXPlaybackStateID.Stopped);
+            Add(FXPlaybackStateID.Cooldown, FXPlaybackStateID.Stopped);
 
             Add(FXPlaybackStateID.WaitingToStart, FXPlaybackStateID.Cancelled);
             Add(FXPlaybackStateID.Playing, FXPlaybackStateID.Cancelled);
             Add(FXPlaybackStateID.RepeatingDelay, FXPlaybackStateID.Cancelled);
-            Add(FXPlaybackStateID.Cooldown, FXPlaybackStateID.Cancelled);
+            Add(FXPlaybackStateID.Playing, FXPlaybackStateID.Cancelled);
+
+            Add(FXPlaybackStateID.Cancelled, FXPlaybackStateID.Rewinding);
+            Add(FXPlaybackStateID.Rewinding, FXPlaybackStateID.Completed);
 
         }
 
@@ -72,6 +80,8 @@ namespace PSkrzypa.UnityFX
         RepeatingDelay,
         Cooldown,
         Completed,
-        Cancelled
+        Stopped,
+        Cancelled,
+        Rewinding
     }
 }

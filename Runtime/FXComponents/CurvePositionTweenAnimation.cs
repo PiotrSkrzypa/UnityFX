@@ -17,30 +17,64 @@ namespace PSkrzypa.UnityFX
         [SerializeField] AnimationCurve yPositionCurve;
         [SerializeField] AnimationCurve zPositionCurve;
         [SerializeField] Ease easeType = Ease.Linear;
+        Vector3[] sampledPath;
+        float progress;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        public override void Initialize()
         {
+            sampledPath = SampleCurves();
+        }
+
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        {
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             if (useLocalSpace)
                 targetTransform.localPosition = startingPosition;
             else
                 targetTransform.position = startingPosition;
 
-            Vector3[] sampledPath = SampleCurves();
-
-            await LMotion.Create(0f, 1f, Timing.Duration)
+            await LMotion.Create(0f, 1f, calculatedDuration)
                 .WithScheduler(Timing.GetScheduler())
                 .WithEase(easeType)
                 .Bind(t =>
                 {
-                    int index = Mathf.Clamp(Mathf.RoundToInt(t * (sampledPath.Length - 1)), 0, sampledPath.Length - 1);
+                    progress = t;
+                    Vector3 interpolated = GetInterpolatedSampledPosition(t);
                     if (useLocalSpace)
-                        targetTransform.localPosition = sampledPath[index];
+                        targetTransform.localPosition = interpolated;
                     else
-                        targetTransform.position = sampledPath[index];
+                        targetTransform.position = interpolated;
                 })
                 .ToUniTask(cancellationToken);
         }
 
+        private Vector3 GetInterpolatedSampledPosition(float t)
+        {
+            float rawIndex = t * (sampledPath.Length - 1);
+            int indexA = Mathf.FloorToInt(rawIndex);
+            int indexB = Mathf.Min(indexA + 1, sampledPath.Length - 1);
+            float lerpT = rawIndex - indexA;
+            Vector3 interpolated = Vector3.LerpUnclamped(sampledPath[indexA], sampledPath[indexB], lerpT);
+            return interpolated;
+        }
+
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+
+            await LMotion.Create(progress, 0f, calculatedDuration)
+                .WithScheduler(Timing.GetScheduler())
+                .WithEase(easeType)
+                .Bind(t =>
+                {
+                    Vector3 interpolated = GetInterpolatedSampledPosition(t);
+                    if (useLocalSpace)
+                        targetTransform.localPosition = interpolated;
+                    else
+                        targetTransform.position = interpolated;
+                })
+                .ToUniTask();
+        }
         private Vector3[] SampleCurves()
         {
             int steps = Mathf.Max(2, Mathf.RoundToInt(samplingResolution));

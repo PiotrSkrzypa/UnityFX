@@ -10,7 +10,6 @@ namespace PSkrzypa.UnityFX
     [Serializable]
     public class FXCameraShake : BaseFXComponent
     {
-        [SerializeField] float shakeDuration;
         [SerializeField] int frequency = 10;
         [SerializeField] float damping = 0.5f;
         [SerializeField] bool fadeOut;
@@ -18,17 +17,20 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Vector3 movementShakeMagnitude;
         [SerializeField] float zRotationShakeMagnitude;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        Vector3 originalPosiiton;
+        Vector3 originalRotation;
+
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
-            await UniTask.Delay((int)( Timing.Duration * 1000 ), cancellationToken: cancellationToken);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             Camera camera = Camera.main;
-            Vector3 originalPosiiton = camera.transform.localPosition;
-            Vector3 originalRotation = camera.transform.localEulerAngles;
+            originalPosiiton = camera.transform.localPosition;
+            originalRotation = camera.transform.localEulerAngles;
             List<UniTask> tasks = new List<UniTask>();
             var scheduler = Timing.GetScheduler();
             if (movementShakeMagnitude != Vector3.zero)
             {
-                UniTask uniTask = LMotion.Shake.Create(originalPosiiton, movementShakeMagnitude, Timing.Duration)
+                UniTask uniTask = LMotion.Shake.Create(originalPosiiton, movementShakeMagnitude, calculatedDuration)
                 .WithFrequency(frequency)
                 .WithDampingRatio(damping)
                 .WithScheduler(scheduler)
@@ -39,12 +41,41 @@ namespace PSkrzypa.UnityFX
             if (zRotationShakeMagnitude != 0)
             {
                 Vector3 rotationMagnitude = new Vector3(0, 0, zRotationShakeMagnitude);
-                UniTask uniTask = LMotion.Shake.Create(originalRotation, rotationMagnitude, Timing.Duration)
+                UniTask uniTask = LMotion.Shake.Create(originalRotation, rotationMagnitude, calculatedDuration)
                 .WithFrequency(frequency)
                 .WithDampingRatio(damping)
                 .WithScheduler(scheduler)
                 .Bind(camera.transform, (v, tr) => tr.localEulerAngles = v)
                 .ToUniTask(cancellationToken);
+                tasks.Add(uniTask);
+            }
+            await UniTask.WhenAll(tasks);
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            Camera camera = Camera.main;
+            List<UniTask> tasks = new List<UniTask>();
+            var scheduler = Timing.GetScheduler();
+            if (movementShakeMagnitude != Vector3.zero)
+            {
+                UniTask uniTask = LMotion.Shake.Create(originalPosiiton, movementShakeMagnitude, calculatedDuration)
+                .WithFrequency(frequency)
+                .WithDampingRatio(damping)
+                .WithScheduler(scheduler)
+                .Bind(camera.transform, (v, tr) => tr.localPosition = v)
+                .ToUniTask();
+                tasks.Add(uniTask);
+            }
+            if (zRotationShakeMagnitude != 0)
+            {
+                Vector3 rotationMagnitude = new Vector3(0, 0, zRotationShakeMagnitude);
+                UniTask uniTask = LMotion.Shake.Create(originalRotation, rotationMagnitude, calculatedDuration)
+                .WithFrequency(frequency)
+                .WithDampingRatio(damping)
+                .WithScheduler(scheduler)
+                .Bind(camera.transform, (v, tr) => tr.localEulerAngles = v)
+                .ToUniTask();
                 tasks.Add(uniTask);
             }
             await UniTask.WhenAll(tasks);

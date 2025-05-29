@@ -10,11 +10,17 @@ namespace PSkrzypa.UnityFX
     public abstract class BaseFXComponent : IFXComponent
     {
         FXTiming IFXComponent.Timing => Timing;
-        [SerializeField] bool CanPlayWhenAlreadyPlaying = true;
+        [SerializeField] bool canPlayWhenAlreadyPlaying = true;
+        [SerializeField] bool reverseOnCancel = false;
+        [SerializeField][ShowIf("reverseOnCancel")] float reverseSpeedMultiplier = 1f;
         public FXTiming Timing;
         private FXPlaybackStateMachine stateMachine = new FXPlaybackStateMachine();
+        public FXPlaybackStateID CurrentState => stateMachine.CurrentState;
         CancellationTokenSource cts;
 
+        bool IFXComponent.CanPlayWhenAlreadyPlaying => canPlayWhenAlreadyPlaying;
+        bool IFXComponent.ReverseOnCancel => reverseOnCancel;
+        float IFXComponent.ReverseSpeedMultiplier => reverseSpeedMultiplier;
 
         public virtual void Initialize()
         {
@@ -23,9 +29,13 @@ namespace PSkrzypa.UnityFX
         [Button]
         public async UniTask Play()
         {
+            await Play(1f);
+        }
+        public async UniTask Play(float inheritedSpeed = 1f)
+        {
             if (stateMachine.CurrentState != FXPlaybackStateID.Idle)
             {
-                if (!CanPlayWhenAlreadyPlaying)
+                if (!canPlayWhenAlreadyPlaying)
                 {
                     Debug.LogWarning($"[FX] Cannot play {this} when already playing.");
                     return;
@@ -34,35 +44,50 @@ namespace PSkrzypa.UnityFX
             }
             cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
+            float effectiveSpeed = Timing.PlaybackSpeed * inheritedSpeed;
+            float effectiveSpeedAbs = Mathf.Abs(effectiveSpeed);
             try
             {
+                Timing.PlayCount = 0;
                 SetState(FXPlaybackStateID.WaitingToStart);
-                await UniTask.Delay((int)( Timing.InitialDelay * 1000 ), cancellationToken: token);
+                float calculatedInitialDelay = Timing.InitialDelay / effectiveSpeedAbs;
+                float calculatedDelayBetweenRepeats = Timing.DelayBetweenRepeats / effectiveSpeedAbs;
+                float calculatedCooldownDuration = Timing.CooldownDuration > 0 ? Timing.CooldownDuration / effectiveSpeedAbs : 0;
+                if (effectiveSpeed > 0)
+                {
+                    await UniTask.Delay((int)( calculatedInitialDelay * 1000 ), cancellationToken: token); 
+                }
 
                 int repeatCount = Timing.RepeatForever ? int.MaxValue : Timing.NumberOfRepeats;
                 for (int i = 0; i < repeatCount; i++)
                 {
                     SetState(FXPlaybackStateID.Playing);
-                    await PlayInternal(token);
                     Timing.PlayCount++;
+                    await PlayInternal(token, effectiveSpeed);
 
                     if (i < repeatCount - 1)
                     {
                         SetState(FXPlaybackStateID.RepeatingDelay);
-                        await UniTask.Delay((int)( Timing.DelayBetweenRepeats * 1000 ), cancellationToken: token);
+                        await UniTask.Delay((int)( calculatedDelayBetweenRepeats * 1000 ), cancellationToken: token);
                     }
                 }
                 SetState(FXPlaybackStateID.Completed);
-                if (Timing.CooldownDuration > 0)
+                if (calculatedCooldownDuration > 0)
                 {
                     SetState(FXPlaybackStateID.Cooldown);
-                    await UniTask.Delay((int)( Timing.CooldownDuration * 1000 ), DelayType.DeltaTime, PlayerLoopTiming.Update, token);
+                    await UniTask.Delay((int)( calculatedCooldownDuration * 1000 ), DelayType.DeltaTime, PlayerLoopTiming.Update, token);
                 }
                 SetState(FXPlaybackStateID.Idle);
             }
             catch (OperationCanceledException)
             {
-                Debug.Log("Task was canceled");
+                if (stateMachine.CurrentState != FXPlaybackStateID.Cancelled || !reverseOnCancel)
+                    throw;
+
+                SetState(FXPlaybackStateID.Rewinding);
+                await Reverse(inheritedSpeed * reverseSpeedMultiplier);  // reverse should work only on current loop, rest of loop will be played wit PlayInternal with modifiedSpeed
+                SetState(FXPlaybackStateID.Completed);
+                SetState(FXPlaybackStateID.Idle);
             }
             finally
             {
@@ -72,7 +97,7 @@ namespace PSkrzypa.UnityFX
         [Button]
         public void Stop()
         {
-            if (!SetState(FXPlaybackStateID.Cancelled))
+            if (!SetState(FXPlaybackStateID.Stopped))
             {
                 return;
             }
@@ -95,7 +120,7 @@ namespace PSkrzypa.UnityFX
         {
         }
 
-        protected virtual UniTask PlayInternal(CancellationToken cancellationToken)
+        protected virtual UniTask PlayInternal(CancellationToken cancellationToken, float effectiveSpeed = 1f)
         {
             return UniTask.CompletedTask;
         }
@@ -111,6 +136,21 @@ namespace PSkrzypa.UnityFX
         {
             return stateMachine.TryTransitionTo(newState);
         }
-
+        [Button]
+        public void Cancel()
+        {
+            if (!reverseOnCancel || stateMachine.CurrentState != FXPlaybackStateID.Playing)
+            {
+                Stop();
+                return;
+            }
+            SetState(FXPlaybackStateID.Cancelled);
+            cts?.Cancel();
+        }
+        protected virtual UniTask Reverse(float inheritedSpeed = 1f)
+        {
+            Stop();
+            return UniTask.CompletedTask;
+        }
     }
 }

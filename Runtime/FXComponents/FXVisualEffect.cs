@@ -20,10 +20,19 @@ namespace PSkrzypa.UnityFX
         {
             visualEffect.Stop();
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             visualEffect.Reinit();
+            visualEffect.playRate = inheritedSpeed;
             visualEffect.Play();
+            await UniTask.CompletedTask;
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            visualEffect.Reinit();
+            visualEffect.playRate = inheritedSpeed;
+            visualEffect.Play();
+            await UniTask.CompletedTask;
         }
     }
 }

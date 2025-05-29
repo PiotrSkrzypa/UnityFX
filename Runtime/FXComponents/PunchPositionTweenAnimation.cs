@@ -21,13 +21,13 @@ namespace PSkrzypa.UnityFX
 
         Vector3 originalPosition;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
             var scheduler = Timing.GetScheduler();
 
             originalPosition = useLocalSpace ? transformToMove.localPosition : transformToMove.position;
-
-            var motionBuilder = LMotion.Punch.Create(originalPosition, punch, Timing.Duration)
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            var motionBuilder = LMotion.Punch.Create(originalPosition, punch, calculatedDuration)
                 .WithFrequency(frequency)
                 .WithDampingRatio(damping)
                 .WithEase(ease)
@@ -37,6 +37,24 @@ namespace PSkrzypa.UnityFX
                 .ToUniTask(cancellationToken) :
                 motionBuilder.Bind(transformToMove, (v, tr) => transformToMove.position = v)
                 .ToUniTask(cancellationToken);
+
+            await uniTask;
+        }
+        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        {
+            var scheduler = Timing.GetScheduler();
+
+            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            var motionBuilder = LMotion.Punch.Create(originalPosition, punch, calculatedDuration)
+                .WithFrequency(frequency)
+                .WithDampingRatio(damping)
+                .WithEase(ease)
+                .WithScheduler(scheduler);
+            UniTask uniTask = useLocalSpace ?
+                motionBuilder.Bind(transformToMove, (v, tr) => transformToMove.localPosition = v)
+                .ToUniTask() :
+                motionBuilder.Bind(transformToMove, (v, tr) => transformToMove.position = v)
+                .ToUniTask();
 
             await uniTask;
         }

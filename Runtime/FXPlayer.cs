@@ -4,6 +4,7 @@ using UnityEngine.Events;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
+using System;
 
 namespace PSkrzypa.UnityFX
 {
@@ -12,18 +13,18 @@ namespace PSkrzypa.UnityFX
         [SerializeField] bool playOnAwake;
         [SerializeField] bool playOnEnable;
         [SerializeField] bool stopOnDisable;
-        [SerializeField] bool timeScaleIndependent = true;
-        [SerializeField] bool forceTimeScaleSettingOnComponents = true;
-        [SerializeField][SerializeReference] IFXComponent[] components;
-        public IFXComponent[] Components { get => components; }
+        [SerializeField][SerializeReference] FXSequence sequence = new FXSequence();
+        public FXSequence Sequence { get => sequence; }
 
         public UnityEvent OnPlay;
         public UnityEvent OnCompleted;
+        public UnityEvent OnStopped;
         public UnityEvent OnCancelled;
 
         protected bool initialized;
 
         public bool IsPlaying { get; protected set; }
+        public bool IsCancelled { get; protected set; }
 
         protected virtual void Awake()
         {
@@ -33,7 +34,7 @@ namespace PSkrzypa.UnityFX
             }
             if (playOnAwake)
             {
-                Play().Forget();
+                Play();
             }
         }
         public void Initialize()
@@ -48,7 +49,7 @@ namespace PSkrzypa.UnityFX
             }
             if (playOnEnable)
             {
-                Play().Forget();
+                Play();
             }
         }
         private void OnDisable()
@@ -58,47 +59,57 @@ namespace PSkrzypa.UnityFX
                 Stop();
             }
         }
-
         [Button]
-        public async UniTaskVoid Play()
+        public void Play() 
         {
-            if (components != null)
+             Play(1f).Forget();
+        }
+        public async UniTaskVoid Play(float inheritedSpeed = 1f)
+        {
+            if (sequence != null)
             {
                 IsPlaying = true;
                 OnPlay?.Invoke();
-                List<UniTask> tasks = new List<UniTask>();
-                for (int i = 0; i < components.Length; i++)
+                sequence.Initialize();
+                UniTask task = sequence.Play(inheritedSpeed);
+                await task;
+                if (IsCancelled)
                 {
-                    components[i].Initialize();
-                    UniTask task = components[i].Play();
-                    if(components[i].Timing.ContributeToTotalDuration)
-                    {
-                        tasks.Add(task);
-                    }
+                    IsCancelled = false;
                 }
-                await UniTask.WhenAll(tasks);
-                OnCompleted?.Invoke();
+                else
+                {
+                    OnCompleted?.Invoke();
+                }
+                IsPlaying = false;
             }
         }
-        public async UniTask Play(CancellationToken cancellationToken)
+        public async UniTask Play(CancellationToken cancellationToken, float inheritedSpeed = 1f)
         {
-            if (components != null)
+            if (sequence != null)
             {
                 IsPlaying = true;
                 OnPlay?.Invoke();
-                List<UniTask> tasks = new List<UniTask>();
-                for (int i = 0; i < components.Length; i++)
+                try
                 {
-                    components[i].Initialize();
-                    UniTask task = components[i].Play();
-                    if (components[i].Timing.ContributeToTotalDuration)
-                    {
-                        tasks.Add(task);
-                    }
+                    sequence.Initialize();
+                    UniTask task = sequence.Play(inheritedSpeed);
+                    await task.AttachExternalCancellation(cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
-                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-                cancellationToken.ThrowIfCancellationRequested();
-                OnCompleted?.Invoke();
+                catch (OperationCanceledException)
+                {
+                    sequence.Cancel();
+                }
+                if (IsCancelled)
+                {
+                    IsCancelled = false;
+                }
+                else
+                {
+                    OnCompleted?.Invoke();
+                }
+                IsPlaying = false;
             }
         }
         [Button]
@@ -108,28 +119,37 @@ namespace PSkrzypa.UnityFX
             {
                 return;
             }
-            if (components == null)
+            if (sequence == null)
             {
                 return;
             }
-            for (int i = 0; i < components.Length; i++)
-            {
-                components[i].Stop();
-            }
+            sequence.Stop();
             IsPlaying = false;
+            OnStopped?.Invoke();
+        }
+        [Button]
+        public void Cancel()
+        {
+            if (!IsPlaying)
+            {
+                return;
+            }
+            if (sequence == null)
+            {
+                return;
+            }
+            sequence.Cancel();
+            IsCancelled = true;
             OnCancelled?.Invoke();
         }
         [Button]
         public void ResetComponents()
         {
-            if (components == null)
+            if (sequence == null)
             {
                 return;
             }
-            for (int i = 0; i < components.Length; i++)
-            {
-                components[i].Reset();
-            }
+            sequence.Reset();
         }
     } 
 }
