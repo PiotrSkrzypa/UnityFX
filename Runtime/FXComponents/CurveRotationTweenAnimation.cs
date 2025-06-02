@@ -48,7 +48,7 @@ namespace PSkrzypa.UnityFX
                 })
                 .ToUniTask(cancellationToken);
         }
-        override protected async UniTask Reverse(float inheritedSpeed = 1f)
+        override protected async UniTask Rewind(float inheritedSpeed = 1f)
         {
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             await LMotion.Create(progress, 0f, calculatedDuration)

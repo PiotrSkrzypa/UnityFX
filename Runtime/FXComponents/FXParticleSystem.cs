@@ -24,7 +24,7 @@ namespace PSkrzypa.UnityFX
             particleSystem.time = 0;
             particleSystem.Play();
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             await UniTask.Yield();
             particleSystem.time = 0;

@@ -27,7 +27,7 @@ namespace PSkrzypa.UnityFX
             visualEffect.Play();
             await UniTask.CompletedTask;
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             visualEffect.Reinit();
             visualEffect.playRate = inheritedSpeed;

@@ -25,7 +25,7 @@ namespace PSkrzypa.UnityFX
             componentToEnable.enabled = targetState;
             await UniTask.CompletedTask;
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             if (componentToEnable == null)
             {

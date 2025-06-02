@@ -44,7 +44,7 @@ namespace PSkrzypa.UnityFX
                     cancellationToken: cancellationToken);
             }
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             if (graphicToColor == null)
             {

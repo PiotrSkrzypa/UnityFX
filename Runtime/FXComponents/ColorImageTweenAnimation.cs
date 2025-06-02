@@ -27,7 +27,7 @@ namespace PSkrzypa.UnityFX
 
             await handle.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             Color currentColor = imageToColor.color;

@@ -37,7 +37,7 @@ namespace PSkrzypa.UnityFX
             }
             light.intensity = targetIntensity;
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             if (light == null)
             {

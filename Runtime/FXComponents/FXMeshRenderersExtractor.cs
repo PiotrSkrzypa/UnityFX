@@ -46,13 +46,14 @@ namespace PSkrzypa.UnityFX
                     ( (MaterialPropertyBlockTweenAnimation)fXComponent ).InjectRenderersList(foundRenderers);
                 }
             }
+            await UniTask.CompletedTask;
         }
         public List<Renderer> GetFoundRenderers()
         {
             List <Renderer> result = new List<Renderer>(foundRenderers);
             return result;
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             await UniTask.CompletedTask;
         }

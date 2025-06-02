@@ -40,9 +40,9 @@ namespace PSkrzypa.UnityFX
             }
             await UniTask.WhenAll(allTasks);
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
-            
+            await UniTask.CompletedTask;
         }
         protected override void StopInternal()
         {

@@ -17,7 +17,7 @@ namespace PSkrzypa.UnityFX
             AudioSource.PlayClipAtPoint(audioClip, Vector3.zero);
             await UniTask.CompletedTask;
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1f)
+        protected override async UniTask Rewind(float inheritedSpeed = 1f)
         {
             // Audio effects typically do not reverse, so this can be left empty or throw an exception if needed.
             await UniTask.CompletedTask;

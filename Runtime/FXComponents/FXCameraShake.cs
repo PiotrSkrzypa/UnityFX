@@ -33,6 +33,7 @@ namespace PSkrzypa.UnityFX
                 UniTask uniTask = LMotion.Shake.Create(originalPosiiton, movementShakeMagnitude, calculatedDuration)
                 .WithFrequency(frequency)
                 .WithDampingRatio(damping)
+                .WithEase(easeType)
                 .WithScheduler(scheduler)
                 .Bind(camera.transform, (v, tr) => tr.localPosition = v)
                 .ToUniTask(cancellationToken);
@@ -44,6 +45,7 @@ namespace PSkrzypa.UnityFX
                 UniTask uniTask = LMotion.Shake.Create(originalRotation, rotationMagnitude, calculatedDuration)
                 .WithFrequency(frequency)
                 .WithDampingRatio(damping)
+                .WithEase(easeType)
                 .WithScheduler(scheduler)
                 .Bind(camera.transform, (v, tr) => tr.localEulerAngles = v)
                 .ToUniTask(cancellationToken);
@@ -51,7 +53,7 @@ namespace PSkrzypa.UnityFX
             }
             await UniTask.WhenAll(tasks);
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             Camera camera = Camera.main;

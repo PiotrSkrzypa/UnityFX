@@ -24,7 +24,7 @@ namespace PSkrzypa.UnityFX
                 .BindToAlpha(targetCanvasGroup);
             await handle.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             float currentAlpha = targetCanvasGroup.alpha;

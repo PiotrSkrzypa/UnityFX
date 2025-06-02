@@ -31,7 +31,7 @@ namespace PSkrzypa.UnityFX
 
             await uniTask;
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             var scheduler = Timing.GetScheduler();
 

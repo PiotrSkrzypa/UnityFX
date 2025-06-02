@@ -19,7 +19,7 @@ namespace PSkrzypa.UnityFX
             await UniTask.Yield();
             trailRenderer.emitting = true;
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1f)
+        protected override async UniTask Rewind(float inheritedSpeed = 1f)
         {
             await UniTask.Yield();
             trailRenderer.emitting = true;

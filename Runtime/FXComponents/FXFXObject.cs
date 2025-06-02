@@ -22,7 +22,7 @@ namespace PSkrzypa.UnityFX
         {
             fxObject.ResetComponents();
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(float inheritedSpeed = 1)
         {
             fxObject.Cancel();
             await UniTask.WaitWhile(() => fxObject.IsPlaying);

@@ -9,17 +9,18 @@ namespace PSkrzypa.UnityFX
     [Serializable]
     public abstract class BaseFXComponent : IFXComponent
     {
-        FXTiming IFXComponent.Timing => Timing;
         [SerializeField] bool canPlayWhenAlreadyPlaying = true;
-        [SerializeField] bool reverseOnCancel = false;
+        [SerializeField] bool rewindOnCancel = false;
         [SerializeField][ShowIf("reverseOnCancel")] float reverseSpeedMultiplier = 1f;
+        FXTiming IFXComponent.Timing => Timing;
         public FXTiming Timing;
-        private FXPlaybackStateMachine stateMachine = new FXPlaybackStateMachine();
         public FXPlaybackStateID CurrentState => stateMachine.CurrentState;
+        
+        FXPlaybackStateMachine stateMachine = new FXPlaybackStateMachine();
         CancellationTokenSource cts;
 
         bool IFXComponent.CanPlayWhenAlreadyPlaying => canPlayWhenAlreadyPlaying;
-        bool IFXComponent.ReverseOnCancel => reverseOnCancel;
+        bool IFXComponent.ReverseOnCancel => rewindOnCancel;
         float IFXComponent.ReverseSpeedMultiplier => reverseSpeedMultiplier;
 
         public virtual void Initialize()
@@ -27,10 +28,8 @@ namespace PSkrzypa.UnityFX
 
         }
         [Button]
-        public async UniTask Play()
-        {
-            await Play(1f);
-        }
+        public async UniTask Play() => await Play(1f);
+
         public async UniTask Play(float inheritedSpeed = 1f)
         {
             if (stateMachine.CurrentState != FXPlaybackStateID.Idle)
@@ -44,18 +43,17 @@ namespace PSkrzypa.UnityFX
             }
             cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
+
             float effectiveSpeed = Timing.PlaybackSpeed * inheritedSpeed;
-            float effectiveSpeedAbs = Mathf.Abs(effectiveSpeed);
+            float effectiveReverseSpeed = inheritedSpeed * reverseSpeedMultiplier;
             try
             {
                 Timing.PlayCount = 0;
                 SetState(FXPlaybackStateID.WaitingToStart);
-                float calculatedInitialDelay = Timing.InitialDelay / effectiveSpeedAbs;
-                float calculatedDelayBetweenRepeats = Timing.DelayBetweenRepeats / effectiveSpeedAbs;
-                float calculatedCooldownDuration = Timing.CooldownDuration > 0 ? Timing.CooldownDuration / effectiveSpeedAbs : 0;
+
                 if (effectiveSpeed > 0)
                 {
-                    await UniTask.Delay((int)( calculatedInitialDelay * 1000 ), cancellationToken: token); 
+                    await DelaySeconds(Timing.InitialDelay, effectiveSpeed, token, Timing.TimeScaleIndependent);
                 }
 
                 int repeatCount = Timing.RepeatForever ? int.MaxValue : Timing.NumberOfRepeats;
@@ -68,33 +66,30 @@ namespace PSkrzypa.UnityFX
                     if (i < repeatCount - 1)
                     {
                         SetState(FXPlaybackStateID.RepeatingDelay);
-                        await UniTask.Delay((int)( calculatedDelayBetweenRepeats * 1000 ), cancellationToken: token);
+                        await DelaySeconds(Timing.DelayBetweenRepeats, effectiveSpeed, token, Timing.TimeScaleIndependent);
                     }
                 }
                 SetState(FXPlaybackStateID.Completed);
-                if (calculatedCooldownDuration > 0)
-                {
-                    SetState(FXPlaybackStateID.Cooldown);
-                    await UniTask.Delay((int)( calculatedCooldownDuration * 1000 ), DelayType.DeltaTime, PlayerLoopTiming.Update, token);
-                }
+
+                SetState(FXPlaybackStateID.Cooldown);
+                await DelaySeconds(Timing.CooldownDuration, effectiveSpeed, token, Timing.TimeScaleIndependent);
+
                 SetState(FXPlaybackStateID.Idle);
             }
             catch (OperationCanceledException)
             {
-                if (stateMachine.CurrentState != FXPlaybackStateID.Cancelled || !reverseOnCancel)
+                if (stateMachine.CurrentState != FXPlaybackStateID.Cancelled || !rewindOnCancel)
                     throw;
 
                 SetState(FXPlaybackStateID.Rewinding);
                 Timing.PlayCount--;
 
-                float effectiveReverseSpeed = inheritedSpeed * reverseSpeedMultiplier;
-                await Reverse(effectiveReverseSpeed);
-                float calculatedDelayBetweenRepeats = Timing.DelayBetweenRepeats / Mathf.Abs(effectiveReverseSpeed);
+                await Rewind(effectiveReverseSpeed);
                 while (Timing.PlayCount > 0)
                 {
                     SetState(FXPlaybackStateID.RepeatingDelay);
-                    await UniTask.Delay((int)( calculatedDelayBetweenRepeats * 1000 ),
-                        Timing.TimeScaleIndependent ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime);
+                    await DelaySeconds(Timing.DelayBetweenRepeats, effectiveReverseSpeed, token, Timing.TimeScaleIndependent);
+                   
                     SetState(FXPlaybackStateID.Playing);
                     await Play(effectiveReverseSpeed);
                     Timing.PlayCount--;
@@ -106,6 +101,14 @@ namespace PSkrzypa.UnityFX
             {
                 CancellationTokenCleanUp();
             }
+        }
+        private async UniTask DelaySeconds(float duration, float speed, CancellationToken token, bool unscaled = false)
+        {
+            if (duration <= 0f) return;
+
+            var milliseconds = (int)((duration / speed) * 1000);
+            var type = unscaled ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime;
+            await UniTask.Delay(milliseconds, type, PlayerLoopTiming.Update, token);
         }
         [Button]
         public void Stop()
@@ -152,7 +155,7 @@ namespace PSkrzypa.UnityFX
         [Button]
         public void Cancel()
         {
-            if (!reverseOnCancel || stateMachine.CurrentState != FXPlaybackStateID.Playing)
+            if (!rewindOnCancel || stateMachine.CurrentState != FXPlaybackStateID.Playing)
             {
                 Stop();
                 return;
@@ -160,7 +163,7 @@ namespace PSkrzypa.UnityFX
             SetState(FXPlaybackStateID.Cancelled);
             cts?.Cancel();
         }
-        protected virtual UniTask Reverse(float inheritedSpeed = 1f)
+        protected virtual UniTask Rewind(float inheritedSpeed = 1f)
         {
             Stop();
             return UniTask.CompletedTask;

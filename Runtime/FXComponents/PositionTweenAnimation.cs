@@ -39,7 +39,7 @@ namespace PSkrzypa.UnityFX
 
             await handle.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Reverse(float inheritedSpeed = 1f)
+        protected override async UniTask Rewind(float inheritedSpeed = 1f)
         {
             if (transformToMove == null)
                 return;
