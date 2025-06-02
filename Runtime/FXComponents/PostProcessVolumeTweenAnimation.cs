@@ -15,16 +15,16 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private float targetWeight = 1f;
         [SerializeField] private Ease ease = Ease.OutQuad;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             if (volume == null)
             {
                 Debug.LogWarning("[PostProcessVolumeTweenAnimation] Volume is null.");
                 return;
             }
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            float fromWeight = inheritedSpeed > 0 ? startWeight : targetWeight;
-            float toWeight = inheritedSpeed > 0 ? targetWeight : startWeight;
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
+            float fromWeight = playbackSpeed.speed > 0 ? startWeight : targetWeight;
+            float toWeight = playbackSpeed.speed > 0 ? targetWeight : startWeight;
             volume.weight = fromWeight;
 
             var scheduler = Timing.GetScheduler();
@@ -36,9 +36,9 @@ namespace PSkrzypa.UnityFX
 
             await tween.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             float currentWeight = volume.weight;
             var scheduler = Timing.GetScheduler();
 

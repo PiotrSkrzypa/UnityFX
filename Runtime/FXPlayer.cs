@@ -62,16 +62,16 @@ namespace PSkrzypa.UnityFX
         [Button]
         public void Play() 
         {
-             Play(1f).Forget();
+             Play(new PlaybackSpeed(1f, 1f)).Forget();
         }
-        public async UniTaskVoid Play(float inheritedSpeed = 1f)
+        public async UniTaskVoid Play(PlaybackSpeed playbackSpeed)
         {
             if (sequence != null)
             {
                 IsPlaying = true;
                 OnPlay?.Invoke();
                 sequence.Initialize();
-                UniTask task = sequence.Play(inheritedSpeed);
+                UniTask task = sequence.Play(playbackSpeed);
                 await task;
                 if (IsCancelled)
                 {
@@ -84,7 +84,7 @@ namespace PSkrzypa.UnityFX
                 IsPlaying = false;
             }
         }
-        public async UniTask Play(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        public async UniTask Play(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             if (sequence != null)
             {
@@ -93,7 +93,7 @@ namespace PSkrzypa.UnityFX
                 try
                 {
                     sequence.Initialize();
-                    UniTask task = sequence.Play(inheritedSpeed);
+                    UniTask task = sequence.Play(playbackSpeed);
                     await task.AttachExternalCancellation(cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                 }

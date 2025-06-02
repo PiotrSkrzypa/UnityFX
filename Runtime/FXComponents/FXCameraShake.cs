@@ -20,9 +20,9 @@ namespace PSkrzypa.UnityFX
         Vector3 originalPosiiton;
         Vector3 originalRotation;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             Camera camera = Camera.main;
             originalPosiiton = camera.transform.localPosition;
             originalRotation = camera.transform.localEulerAngles;
@@ -53,9 +53,9 @@ namespace PSkrzypa.UnityFX
             }
             await UniTask.WhenAll(tasks);
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             Camera camera = Camera.main;
             List<UniTask> tasks = new List<UniTask>();
             var scheduler = Timing.GetScheduler();

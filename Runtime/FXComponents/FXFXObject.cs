@@ -10,9 +10,9 @@ namespace PSkrzypa.UnityFX
     {
         [SerializeField] FXPlayer fxObject;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
-            await fxObject.Play(cancellationToken, inheritedSpeed);
+            await fxObject.Play(cancellationToken, playbackSpeed);
         }
         protected override void StopInternal()
         {
@@ -22,7 +22,7 @@ namespace PSkrzypa.UnityFX
         {
             fxObject.ResetComponents();
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             fxObject.Cancel();
             await UniTask.WaitWhile(() => fxObject.IsPlaying);

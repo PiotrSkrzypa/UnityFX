@@ -20,6 +20,7 @@ namespace PSkrzypa.UnityFX
             Add(FXPlaybackStateID.Playing, FXPlaybackStateID.RepeatingDelay);
             Add(FXPlaybackStateID.RepeatingDelay, FXPlaybackStateID.Playing);
             Add(FXPlaybackStateID.Playing, FXPlaybackStateID.Completed);
+            Add(FXPlaybackStateID.Completed, FXPlaybackStateID.Cooldown);
 
             Add(FXPlaybackStateID.Cooldown, FXPlaybackStateID.Idle);
             Add(FXPlaybackStateID.Stopped, FXPlaybackStateID.Idle);

@@ -14,7 +14,7 @@ namespace PSkrzypa.UnityFX
         bool originalState;
 
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             if (componentToEnable == null)
             {
@@ -25,7 +25,7 @@ namespace PSkrzypa.UnityFX
             componentToEnable.enabled = targetState;
             await UniTask.CompletedTask;
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             if (componentToEnable == null)
             {

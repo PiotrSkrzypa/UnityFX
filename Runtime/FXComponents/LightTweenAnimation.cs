@@ -12,14 +12,14 @@ namespace PSkrzypa.UnityFX
         [SerializeField] float startIntensity = 0f;
         [SerializeField] float targetIntensity = 1f;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             if (light == null)
             {
                 Debug.LogWarning("[LightTweenAnimation] Light reference is null.");
                 return;
             }
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             light.intensity = startIntensity;
 
             float elapsed = 0f;
@@ -37,14 +37,14 @@ namespace PSkrzypa.UnityFX
             }
             light.intensity = targetIntensity;
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             if (light == null)
             {
                 Debug.LogWarning("[LightTweenAnimation] Light reference is null.");
                 return;
             }
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             float currentIntensity = light.intensity;
 
             float elapsed = 0f;

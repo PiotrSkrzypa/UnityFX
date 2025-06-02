@@ -14,12 +14,12 @@ namespace PSkrzypa.UnityFX
         {
             light.enabled = false;
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             await UniTask.Yield();
             light.enabled = true;
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1f)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             light.enabled = false;
             await UniTask.Yield();

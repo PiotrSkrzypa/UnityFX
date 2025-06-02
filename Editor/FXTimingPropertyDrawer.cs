@@ -16,7 +16,6 @@ namespace PSkrzypa.UnityFX.Editor
         {
             VisualElement root = new VisualElement();
             visualTree.CloneTree(root);
-            FloatField playbackSpeedField = BindField<FloatField>(root, property, "PlaybackSpeed");
             FloatField durationField = BindField<FloatField>(root, property, "Duration");
             FloatField initialDelayField = BindField<FloatField>(root, property, "InitialDelay");
             FloatField cooldownDurationField = BindField<FloatField>(root, property, "CooldownDuration");

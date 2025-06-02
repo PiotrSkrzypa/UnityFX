@@ -16,7 +16,7 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Transform volumeCenter;
         List<Renderer> foundRenderers;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             foundRenderers = new List<Renderer>();
             Collider[] colliders = Physics.OverlapBox(volumeCenter.position + volumeCenterOffset, volumeSize / 2f, Quaternion.identity, layerMask);
@@ -53,7 +53,7 @@ namespace PSkrzypa.UnityFX
             List <Renderer> result = new List<Renderer>(foundRenderers);
             return result;
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             await UniTask.CompletedTask;
         }

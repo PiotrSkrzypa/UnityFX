@@ -16,14 +16,14 @@ namespace PSkrzypa.UnityFX
         Color[] colorSamples;
         Color originalColor;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             if (graphicToColor == null)
             {
                 Debug.LogWarning("[GradientColorGraphicTweenAnimation] graphicToColor is null.");
                 return;
             }
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             originalColor = graphicToColor.color;
 
             int steps = Mathf.Max(1, Mathf.RoundToInt(gradientSamplingResolution));
@@ -44,14 +44,14 @@ namespace PSkrzypa.UnityFX
                     cancellationToken: cancellationToken);
             }
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             if (graphicToColor == null)
             {
                 Debug.LogWarning("[GradientColorGraphicTweenAnimation] graphicToColor is null.");
                 return;
             }
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             Color currentColor = graphicToColor.color;
 
             int steps = Mathf.Max(1, Mathf.RoundToInt(gradientSamplingResolution));

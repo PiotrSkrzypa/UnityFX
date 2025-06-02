@@ -8,11 +8,11 @@ namespace PSkrzypa.UnityFX
     {
         FXTiming Timing { get; }
         bool CanPlayWhenAlreadyPlaying { get; }
-        bool ReverseOnCancel { get; }
-        float ReverseSpeedMultiplier { get; }
+        bool RewindOnCancel { get; }
+        float RewindSpeedMultiplier { get; }
         FXPlaybackStateID CurrentState { get; }
         void Initialize();
-        UniTask Play(float inheritedSpeed = 1f);
+        UniTask Play(PlaybackSpeed playbackSpeed);
         void Reset();
         void Stop();
         void Cancel();

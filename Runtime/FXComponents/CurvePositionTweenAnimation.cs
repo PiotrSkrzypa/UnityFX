@@ -25,15 +25,15 @@ namespace PSkrzypa.UnityFX
             sampledPath = SampleCurves();
         }
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             if (useLocalSpace)
                 targetTransform.localPosition = startingPosition;
             else
                 targetTransform.position = startingPosition;
-            float from = inheritedSpeed > 0 ? 0f : 1f;
-            float to = inheritedSpeed > 0 ? 1f : 0f;
+            float from = playbackSpeed.speed > 0 ? 0f : 1f;
+            float to = playbackSpeed.speed > 0 ? 1f : 0f;
             await LMotion.Create(from, to, calculatedDuration)
                 .WithScheduler(Timing.GetScheduler())
                 .WithEase(easeType)
@@ -59,9 +59,9 @@ namespace PSkrzypa.UnityFX
             return interpolated;
         }
 
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
 
             await LMotion.Create(progress, 0f, calculatedDuration)
                 .WithScheduler(Timing.GetScheduler())

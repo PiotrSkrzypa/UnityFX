@@ -19,10 +19,10 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private Vector3 punch;
         Vector3 originalRotation;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             var scheduler = Timing.GetScheduler();
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             originalRotation = useLocalSpace ? transformToRotate.localEulerAngles : transformToRotate.eulerAngles;
 
             var motionBuilder = LMotion.Punch.Create(originalRotation, punch, calculatedDuration)
@@ -37,10 +37,10 @@ namespace PSkrzypa.UnityFX
 
             await uniTask;
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             var scheduler = Timing.GetScheduler();
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             var motionBuilder = LMotion.Punch.Create(originalRotation, punch, calculatedDuration)
                             .WithFrequency(frequency)
                             .WithDampingRatio(damping)

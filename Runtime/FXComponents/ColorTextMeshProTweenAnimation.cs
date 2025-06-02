@@ -15,11 +15,11 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Color startColor;
         [SerializeField] Color targetColor;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            Color fromColor = inheritedSpeed > 0 ? startColor : targetColor;
-            Color toColor = inheritedSpeed > 0 ? targetColor : startColor;
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
+            Color fromColor = playbackSpeed.speed > 0 ? startColor : targetColor;
+            Color toColor = playbackSpeed.speed > 0 ? targetColor : startColor;
             var handle = LMotion.Create(fromColor, toColor, calculatedDuration)
                 .WithEase(Ease.OutQuad)
                 .WithScheduler(Timing.GetScheduler())
@@ -27,9 +27,9 @@ namespace PSkrzypa.UnityFX
 
             await handle.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             Color currentColor = textToColor.color;
             var handle = LMotion.Create(currentColor, startColor, calculatedDuration)
                 .WithEase(Ease.OutQuad)

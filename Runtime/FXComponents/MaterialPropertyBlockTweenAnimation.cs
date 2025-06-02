@@ -13,13 +13,13 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private List<Renderer> meshRenderers;
         [SerializeField][SerializeReference] private List<MaterialPropertyBlockParameter> parametersToAnimate;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             if (meshRenderers == null || parametersToAnimate == null) return;
 
             List<UniTask> allTasks = new();
 
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             foreach (var renderer in meshRenderers)
             {
                 MaterialPropertyBlock block = new MaterialPropertyBlock();
@@ -40,7 +40,7 @@ namespace PSkrzypa.UnityFX
             }
             await UniTask.WhenAll(allTasks);
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             await UniTask.CompletedTask;
         }

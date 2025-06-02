@@ -18,13 +18,13 @@ namespace PSkrzypa.UnityFX
         {
             particleSystem.Stop();
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             await UniTask.Yield();
             particleSystem.time = 0;
             particleSystem.Play();
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             await UniTask.Yield();
             particleSystem.time = 0;

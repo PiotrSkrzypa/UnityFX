@@ -14,7 +14,7 @@ namespace PSkrzypa.UnityFX
     {
         [SerializeField] bool canPlayWhenAlreadyPlaying;
         [SerializeField] bool rewindOnCancel = false;
-        [SerializeField][ShowIf("reverseOnCancel")] float reverseSpeedMultiplier = 1f;
+        [SerializeField] PlaybackSpeed playbackSpeedSettings = new PlaybackSpeed { speed = 1f, rewindSpeed = -1f };
         FXTiming IFXComponent.Timing => SequenceTiming;
         public FXSequenceTiming SequenceTiming = new FXSequenceTiming();
         [SerializeField][SerializeReference] IFXComponent[] components;
@@ -23,8 +23,8 @@ namespace PSkrzypa.UnityFX
         public FXPlaybackStateID CurrentState => stateMachine.CurrentState;
 
         bool IFXComponent.CanPlayWhenAlreadyPlaying => canPlayWhenAlreadyPlaying;
-        bool IFXComponent.ReverseOnCancel => rewindOnCancel;
-        float IFXComponent.ReverseSpeedMultiplier => reverseSpeedMultiplier;
+        bool IFXComponent.RewindOnCancel => rewindOnCancel;
+        float IFXComponent.RewindSpeedMultiplier => playbackSpeedSettings.rewindSpeed;
 
 
         public UnityEvent OnPlay;
@@ -42,9 +42,9 @@ namespace PSkrzypa.UnityFX
         [Button]
         public void Play()
         {
-            Play(SequenceTiming.PlaybackSpeed).Forget();
+            Play(new PlaybackSpeed(1f, 1f)).Forget();
         }
-        public async UniTask Play(float inheritedSpeed = 1f)
+        public async UniTask Play(PlaybackSpeed inheritedplaybackSpeed)
         {
             if (stateMachine.CurrentState != FXPlaybackStateID.Idle)
             {
@@ -58,21 +58,23 @@ namespace PSkrzypa.UnityFX
             cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             SequenceTiming.RecalculateDuration(components);
-            await Play(token);
+            PlaybackSpeed combinedPlaybackSpeed = new PlaybackSpeed
+            {
+                speed = playbackSpeedSettings.speed * inheritedplaybackSpeed.speed,
+                rewindSpeed = playbackSpeedSettings.rewindSpeed * inheritedplaybackSpeed.rewindSpeed
+            };
+            await InternalPlay(combinedPlaybackSpeed, token);
         }
-        public async UniTask Play(CancellationToken token = default, float inheritedSpeed = 1f)
+        private async UniTask InternalPlay(PlaybackSpeed inheritedPlaybackSpeed, CancellationToken token = default)
         {
             try
             {
                 SequenceTiming.PlayCount = 0;
                 OnPlay?.Invoke();
                 SetState(FXPlaybackStateID.WaitingToStart);
-                float effectiveSpeed = SequenceTiming.PlaybackSpeed * inheritedSpeed;
+                float inheritedSpeedAbs = Mathf.Abs(inheritedPlaybackSpeed.speed);
 
-                if (effectiveSpeed > 0)
-                {
-                    await DelaySeconds(SequenceTiming.InitialDelay, effectiveSpeed, token, SequenceTiming.TimeScaleIndependent);
-                }
+                await DelaySeconds(SequenceTiming.InitialDelay, inheritedSpeedAbs, token, SequenceTiming.TimeScaleIndependent);
 
                 int repeatCount = SequenceTiming.RepeatForever ? int.MaxValue : Mathf.Max(1, SequenceTiming.NumberOfRepeats);
                 for (int i = 0; i < repeatCount; i++)
@@ -82,18 +84,18 @@ namespace PSkrzypa.UnityFX
                     switch (SequenceTiming.PlayMode)
                     {
                         case SequencePlayMode.Sequential:
-                            await PlaySequential(token, effectiveSpeed);
+                            await PlaySequential(token, inheritedPlaybackSpeed).AttachExternalCancellation(token);
                             break;
                         case SequencePlayMode.Parallel:
                         default:
-                            await PlayParallel(token, effectiveSpeed);
+                            await PlayParallel(token, inheritedPlaybackSpeed).AttachExternalCancellation(token);
                             break;
                     }
 
                     if (i < repeatCount - 1)
                     {
                         SetState(FXPlaybackStateID.RepeatingDelay);
-                        await DelaySeconds(SequenceTiming.DelayBetweenRepeats, effectiveSpeed, token, SequenceTiming.TimeScaleIndependent);
+                        await DelaySeconds(SequenceTiming.DelayBetweenRepeats, inheritedSpeedAbs, token, SequenceTiming.TimeScaleIndependent);
                     }
                 }
                 SetState(FXPlaybackStateID.Completed);
@@ -101,7 +103,7 @@ namespace PSkrzypa.UnityFX
                 if (SequenceTiming.CooldownDuration > 0)
                 {
                     SetState(FXPlaybackStateID.Cooldown);
-                    await DelaySeconds(SequenceTiming.CooldownDuration, effectiveSpeed, token, SequenceTiming.TimeScaleIndependent);
+                    await DelaySeconds(SequenceTiming.CooldownDuration, inheritedSpeedAbs, token, SequenceTiming.TimeScaleIndependent);
                 }
                 SetState(FXPlaybackStateID.Idle);
             }
@@ -111,7 +113,7 @@ namespace PSkrzypa.UnityFX
                     throw;
 
                 SetState(FXPlaybackStateID.Rewinding);
-                await Rewind(inheritedSpeed);
+                await Rewind(inheritedPlaybackSpeed);
             }
             finally
             {
@@ -128,7 +130,7 @@ namespace PSkrzypa.UnityFX
             var type = unscaled ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime;
             await UniTask.Delay(milliseconds, type, PlayerLoopTiming.Update, token);
         }
-        private async UniTask PlayParallel(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        private async UniTask PlayParallel(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             CancellationToken defaultToken = default;
             if (components != null)
@@ -137,7 +139,7 @@ namespace PSkrzypa.UnityFX
                 for (int i = 0; i < components.Length; i++)
                 {
                     components[i].Initialize();
-                    UniTask task = components[i].Play(inheritedSpeed);
+                    UniTask task = components[i].Play(playbackSpeed);
                     if (components[i].Timing.ContributeToTotalDuration)
                     {
                         tasks.Add(task);
@@ -154,29 +156,24 @@ namespace PSkrzypa.UnityFX
             }
         }
 
-        private async UniTask PlaySequential(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        private async UniTask PlaySequential(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             if (components != null)
             {
                 List<UniTask> tasks = new List<UniTask>();
-                var playList = inheritedSpeed > 0 ? Components : Components.Reverse().ToArray();
+                var playList = playbackSpeed.speed > 0 ? Components : Components.Reverse().ToArray();
                 for (int i = 0; i < playList.Length; i++)
                 {
                     currentSequenceIndex = i;
                     playList[i].Initialize();
-                    UniTask task = playList[i].Play(inheritedSpeed).AttachExternalCancellation(cancellationToken);
+                    UniTask task = playList[i].Play(playbackSpeed).AttachExternalCancellation(cancellationToken);
                     await task;
                 }
             }
         }
-        private async UniTask Rewind(float inheritedSpeed = 1f)
+        private async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             SequenceTiming.PlayCount--;
-            float effectiveReverseSpeed = SequenceTiming.PlaybackSpeed * inheritedSpeed * reverseSpeedMultiplier;
-            float effectiveSpeedAbs = Mathf.Abs(effectiveReverseSpeed);
-            float calculatedInitialDelay = SequenceTiming.InitialDelay / effectiveSpeedAbs;
-            float calculatedDelayBetweenRepeats = SequenceTiming.DelayBetweenRepeats / effectiveSpeedAbs;
-            float calculatedCooldownDuration = SequenceTiming.CooldownDuration > 0 ? SequenceTiming.CooldownDuration / effectiveSpeedAbs : 0;
 
             switch (SequenceTiming.PlayMode)
             {
@@ -194,7 +191,7 @@ namespace PSkrzypa.UnityFX
                             }
                             else
                             {
-                                iFXComponent.Play(effectiveReverseSpeed).Forget();
+                                iFXComponent.Play(playbackSpeed.Flip()).Forget();
                             }
                             UniTask task = UniTask.WaitUntil(()=>iFXComponent.CurrentState==FXPlaybackStateID.Idle);
                             await task;
@@ -225,17 +222,17 @@ namespace PSkrzypa.UnityFX
             while (SequenceTiming.PlayCount > 0)
             {
                 SetState(FXPlaybackStateID.RepeatingDelay);
-                await UniTask.Delay((int)( calculatedDelayBetweenRepeats * 1000 ),
-                    SequenceTiming.TimeScaleIndependent ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime);
+                await DelaySeconds(SequenceTiming.DelayBetweenRepeats, Mathf.Abs(playbackSpeed.rewindSpeed), default, SequenceTiming.TimeScaleIndependent);
+
                 SetState(FXPlaybackStateID.Rewinding);
                 switch (SequenceTiming.PlayMode)
                 {
                     case SequencePlayMode.Sequential:
-                        await PlaySequential(default, effectiveReverseSpeed);
+                        await PlaySequential(default, playbackSpeed.Flip());
                         break;
                     case SequencePlayMode.Parallel:
                     default:
-                        await PlayParallel(default, effectiveReverseSpeed);
+                        await PlayParallel(default, playbackSpeed.Flip());
                         break;
                 }
                 SequenceTiming.PlayCount--;

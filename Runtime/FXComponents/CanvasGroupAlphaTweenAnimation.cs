@@ -14,20 +14,20 @@ namespace PSkrzypa.UnityFX
         [SerializeField] float startAlpha;
         [SerializeField] float targetAlpha;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
-            float fromAlpha = inheritedSpeed > 0 ? startAlpha : targetAlpha;
-            float toAlpha = inheritedSpeed > 0 ? targetAlpha : startAlpha;
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
+            float fromAlpha = playbackSpeed.speed > 0 ? startAlpha : targetAlpha;
+            float toAlpha = playbackSpeed.speed > 0 ? targetAlpha : startAlpha;
             var handle = LMotion.Create(fromAlpha, toAlpha, calculatedDuration)
                 .WithEase(LitMotion.Ease.OutQuad).WithScheduler(Timing.GetScheduler())
                 .BindToAlpha(targetCanvasGroup);
             await handle.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
             float currentAlpha = targetCanvasGroup.alpha;
+            float calculatedDuration = Timing.Duration * Mathf.InverseLerp(startAlpha,targetAlpha, currentAlpha) / Mathf.Abs(playbackSpeed.rewindSpeed);
             var handle = LMotion.Create(currentAlpha, startAlpha, calculatedDuration)
                 .WithEase(LitMotion.Ease.OutQuad).WithScheduler(Timing.GetScheduler())
                 .BindToAlpha(targetCanvasGroup);

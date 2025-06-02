@@ -16,9 +16,9 @@ namespace PSkrzypa.UnityFX
 
         private Vector3 originalScale;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             originalScale = transformToScale.localScale;
 
             var scheduler = Timing.GetScheduler();
@@ -31,9 +31,9 @@ namespace PSkrzypa.UnityFX
 
             await punchTween.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             var scheduler = Timing.GetScheduler();
 
             var punchTween = LMotion.Punch.Create(originalScale, punch, calculatedDuration)

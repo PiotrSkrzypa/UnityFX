@@ -21,12 +21,12 @@ namespace PSkrzypa.UnityFX
 
         Vector3 originalPosition;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, float inheritedSpeed = 1f)
+        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
         {
             var scheduler = Timing.GetScheduler();
 
             originalPosition = useLocalSpace ? transformToMove.localPosition : transformToMove.position;
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             var motionBuilder = LMotion.Punch.Create(originalPosition, punch, calculatedDuration)
                 .WithFrequency(frequency)
                 .WithDampingRatio(damping)
@@ -40,11 +40,11 @@ namespace PSkrzypa.UnityFX
 
             await uniTask;
         }
-        protected override async UniTask Rewind(float inheritedSpeed = 1)
+        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
         {
             var scheduler = Timing.GetScheduler();
 
-            float calculatedDuration = Timing.Duration / Mathf.Abs(inheritedSpeed);
+            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
             var motionBuilder = LMotion.Punch.Create(originalPosition, punch, calculatedDuration)
                 .WithFrequency(frequency)
                 .WithDampingRatio(damping)
