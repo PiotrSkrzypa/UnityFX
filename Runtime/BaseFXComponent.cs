@@ -44,19 +44,15 @@ namespace PSkrzypa.UnityFX
             cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
 
-            PlaybackSpeed combinedPlaybackSpeed = new PlaybackSpeed
-            {
-                speed = playbackSpeedSettings.speed * inheritedPlaybackSpeed.speed,
-                rewindSpeed = playbackSpeedSettings.rewindSpeed * inheritedPlaybackSpeed.rewindSpeed
-            };
-            float effectiveSpeedAbs = Mathf.Abs(combinedPlaybackSpeed.speed);
-            float effectiveReverseSpeedAbs = Mathf.Abs(combinedPlaybackSpeed.rewindSpeed);
+            PlaybackSpeed combinedPlaybackSpeed = playbackSpeedSettings * inheritedPlaybackSpeed;
+
+           
             try
             {
                 Timing.PlayCount = 0;
                 SetState(FXPlaybackStateID.WaitingToStart);
 
-                await DelaySeconds(Timing.InitialDelay, effectiveSpeedAbs, token, Timing.TimeScaleIndependent);
+                await DelaySeconds(Timing.InitialDelay, combinedPlaybackSpeed.SpeedAbs, token, Timing.TimeScaleIndependent);
 
                 int repeatCount = Timing.RepeatForever ? int.MaxValue : Timing.NumberOfRepeats;
                 for (int i = 0; i < repeatCount; i++)
@@ -68,13 +64,13 @@ namespace PSkrzypa.UnityFX
                     if (i < repeatCount - 1)
                     {
                         SetState(FXPlaybackStateID.RepeatingDelay);
-                        await DelaySeconds(Timing.DelayBetweenRepeats, effectiveSpeedAbs, token, Timing.TimeScaleIndependent);
+                        await DelaySeconds(Timing.DelayBetweenRepeats, combinedPlaybackSpeed.SpeedAbs, token, Timing.TimeScaleIndependent);
                     }
                 }
                 SetState(FXPlaybackStateID.Completed);
 
                 SetState(FXPlaybackStateID.Cooldown);
-                await DelaySeconds(Timing.CooldownDuration, effectiveSpeedAbs, token, Timing.TimeScaleIndependent);
+                await DelaySeconds(Timing.CooldownDuration, combinedPlaybackSpeed.SpeedAbs, token, Timing.TimeScaleIndependent);
 
                 SetState(FXPlaybackStateID.Idle);
             }
@@ -90,7 +86,7 @@ namespace PSkrzypa.UnityFX
                 while (Timing.PlayCount > 0)
                 {
                     SetState(FXPlaybackStateID.RepeatingDelay);
-                    await DelaySeconds(Timing.DelayBetweenRepeats, effectiveReverseSpeedAbs, token, Timing.TimeScaleIndependent);
+                    await DelaySeconds(Timing.DelayBetweenRepeats, combinedPlaybackSpeed.RewindSpeedAbs, token, Timing.TimeScaleIndependent);
 
                     SetState(FXPlaybackStateID.Playing);
                     await Play(new PlaybackSpeed(combinedPlaybackSpeed.rewindSpeed, combinedPlaybackSpeed.rewindSpeed));
