@@ -10,19 +10,25 @@ namespace PSkrzypa.UnityFX
     {
         [SerializeField] TrailRenderer trailRenderer;
 
+        protected override void Update(float progress)
+        {
+            if(progress== 0f)
+            {
+                trailRenderer.emitting = false;
+            }
+            else if (progress == 1f)
+            {
+                trailRenderer.emitting = true;
+            }
+        }
+
         protected override void StopInternal()
         {
             trailRenderer.emitting = false;
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void ResetInternal()
         {
-            await UniTask.Yield();
-            trailRenderer.emitting = true;
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            await UniTask.Yield();
-            trailRenderer.emitting = true;
+            trailRenderer.emitting = false;
         }
     }
 }

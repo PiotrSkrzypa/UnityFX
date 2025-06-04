@@ -15,28 +15,9 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Color startColor;
         [SerializeField] Color targetColor;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
-            Color fromColor = playbackSpeed.speed > 0 ? startColor : targetColor;
-            Color toColor = playbackSpeed.speed > 0 ? targetColor : startColor;
-            var handle = LMotion.Create(fromColor, toColor, calculatedDuration)
-                .WithEase(Ease.OutQuad)
-                .WithScheduler(Timing.GetScheduler())
-                .BindToColor(imageToColor);
-
-            await handle.ToUniTask(cancellationToken);
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
-            Color currentColor = imageToColor.color;
-            var handle = LMotion.Create(currentColor, startColor, calculatedDuration)
-                .WithEase(Ease.OutQuad)
-                .WithScheduler(Timing.GetScheduler())
-                .BindToColor(imageToColor);
-
-            await handle.ToUniTask();
+            imageToColor.color = Color.Lerp(startColor, targetColor, progress);
         }
 
         protected override void StopInternal()

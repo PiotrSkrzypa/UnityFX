@@ -10,19 +10,33 @@ namespace PSkrzypa.UnityFX
     {
         [SerializeField] Light light;
 
+        public override void Initialize()
+        {
+            if (light == null)
+            {
+                Debug.LogWarning("[FXLight] light is null.");
+                return;
+            }
+        }
+        protected override void Update(float progress)
+        {
+            if (progress == 0f)
+            {
+                light.enabled = false;
+            }
+            if (progress == 1f)
+            {
+                light.enabled = true;
+            }
+        }
+
         protected override void StopInternal()
         {
             light.enabled = false;
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
-        {
-            await UniTask.Yield();
-            light.enabled = true;
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        protected override void ResetInternal()
         {
             light.enabled = false;
-            await UniTask.Yield();
         }
     }
 }

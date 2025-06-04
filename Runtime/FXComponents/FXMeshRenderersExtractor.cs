@@ -16,46 +16,45 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Transform volumeCenter;
         List<Renderer> foundRenderers;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            foundRenderers = new List<Renderer>();
-            Collider[] colliders = Physics.OverlapBox(volumeCenter.position + volumeCenterOffset, volumeSize / 2f, Quaternion.identity, layerMask);
-            foreach (Collider collider in colliders)
+            if (progress == 0)
             {
-                List<Renderer> renderers = collider.GetComponentsInChildren<Renderer>().Where(x=>x is MeshRenderer || x is SkinnedMeshRenderer).ToList();
-                if (renderers != null)
+                foundRenderers = new List<Renderer>();
+                Collider[] colliders = Physics.OverlapBox(volumeCenter.position + volumeCenterOffset, volumeSize / 2f, Quaternion.identity, layerMask);
+                foreach (Collider collider in colliders)
                 {
-                    if (renderers.Count == 0)
+                    List<Renderer> renderers = collider.GetComponentsInChildren<Renderer>().Where(x=>x is MeshRenderer || x is SkinnedMeshRenderer).ToList();
+                    if (renderers != null)
                     {
-                        renderers = collider.GetComponentsInChildren<Renderer>()?.Where(x => x is MeshRenderer || x is SkinnedMeshRenderer).ToList();
+                        if (renderers.Count == 0)
+                        {
+                            renderers = collider.GetComponentsInChildren<Renderer>()?.Where(x => x is MeshRenderer || x is SkinnedMeshRenderer).ToList();
+                        }
+                        foundRenderers.AddRange(renderers);
                     }
-                    foundRenderers.AddRange(renderers);
                 }
-            }
-            FXPlayer fXObject = volumeCenter.GetComponent<FXPlayer>();
-            if (fXObject == null)
-            {
-                return;
-            }
-            IFXComponent[] fxComponents = fXObject.Sequence.Components;
-            for (int i = 0; i < fxComponents.Length; i++)
-            {
-                IFXComponent fXComponent = fxComponents[i];
-                if (fXComponent is MaterialPropertyBlockTweenAnimation)
+                FXPlayer fXObject = volumeCenter.GetComponent<FXPlayer>();
+                if (fXObject == null)
                 {
-                    ( (MaterialPropertyBlockTweenAnimation)fXComponent ).InjectRenderersList(foundRenderers);
+                    return;
+                }
+                IFXComponent[] fxComponents = fXObject.Sequence.Components;
+                for (int i = 0; i < fxComponents.Length; i++)
+                {
+                    IFXComponent fXComponent = fxComponents[i];
+                    if (fXComponent is MaterialPropertyBlockTweenAnimation)
+                    {
+                        ( (MaterialPropertyBlockTweenAnimation)fXComponent ).InjectRenderersList(foundRenderers);
+                    }
                 }
             }
-            await UniTask.CompletedTask;
         }
+
         public List<Renderer> GetFoundRenderers()
         {
             List <Renderer> result = new List<Renderer>(foundRenderers);
             return result;
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            await UniTask.CompletedTask;
         }
     }
 }

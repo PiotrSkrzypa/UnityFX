@@ -16,39 +16,22 @@ namespace PSkrzypa.UnityFX
         [SerializeField] AnimationCurve xPositionCurve;
         [SerializeField] AnimationCurve yPositionCurve;
         [SerializeField] AnimationCurve zPositionCurve;
-        [SerializeField] Ease easeType = Ease.Linear;
         Vector3[] sampledPath;
-        float progress;
 
         public override void Initialize()
         {
             sampledPath = SampleCurves();
         }
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
+            Vector3 interpolated = GetInterpolatedSampledPosition(progress);
             if (useLocalSpace)
-                targetTransform.localPosition = startingPosition;
+                targetTransform.localPosition = interpolated;
             else
-                targetTransform.position = startingPosition;
-            float from = playbackSpeed.speed > 0 ? 0f : 1f;
-            float to = playbackSpeed.speed > 0 ? 1f : 0f;
-            await LMotion.Create(from, to, calculatedDuration)
-                .WithScheduler(Timing.GetScheduler())
-                .WithEase(easeType)
-                .Bind(t =>
-                {
-                    progress = t;
-                    Vector3 interpolated = GetInterpolatedSampledPosition(t);
-                    if (useLocalSpace)
-                        targetTransform.localPosition = interpolated;
-                    else
-                        targetTransform.position = interpolated;
-                })
-                .ToUniTask(cancellationToken);
+                targetTransform.position = interpolated;
         }
-
+        
         private Vector3 GetInterpolatedSampledPosition(float t)
         {
             float rawIndex = t * (sampledPath.Length - 1);
@@ -59,23 +42,6 @@ namespace PSkrzypa.UnityFX
             return interpolated;
         }
 
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
-
-            await LMotion.Create(progress, 0f, calculatedDuration)
-                .WithScheduler(Timing.GetScheduler())
-                .WithEase(easeType)
-                .Bind(t =>
-                {
-                    Vector3 interpolated = GetInterpolatedSampledPosition(t);
-                    if (useLocalSpace)
-                        targetTransform.localPosition = interpolated;
-                    else
-                        targetTransform.position = interpolated;
-                })
-                .ToUniTask();
-        }
         private Vector3[] SampleCurves()
         {
             int steps = Mathf.Max(2, Mathf.RoundToInt(samplingResolution));

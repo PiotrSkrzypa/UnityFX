@@ -16,33 +16,22 @@ namespace PSkrzypa.UnityFX
 
         private Vector3 originalScale;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        public override void Initialize()
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
             originalScale = transformToScale.localScale;
-
-            var scheduler = Timing.GetScheduler();
-
-            var punchTween = LMotion.Punch.Create(originalScale, punch, calculatedDuration)
-                    .WithFrequency(frequency)
-                    .WithDampingRatio(damping)
-                    .WithScheduler(scheduler)
-                    .Bind(transformToScale, (v, t) => t.localScale = v);
-
-            await punchTween.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
-            var scheduler = Timing.GetScheduler();
 
-            var punchTween = LMotion.Punch.Create(originalScale, punch, calculatedDuration)
-                    .WithFrequency(frequency)
-                    .WithDampingRatio(damping)
-                    .WithScheduler(scheduler)
-                    .Bind(transformToScale, (v, t) => t.localScale = v);
-
-            await punchTween.ToUniTask();
+            if (progress == 1f || progress == 0f)
+            {
+                transformToScale.localScale = originalScale;
+                return;
+            }
+            float angularFrequency = (frequency - 0.5f) * Mathf.PI;
+            float dampingFactor = damping * frequency / (2f * Mathf.PI);
+            Vector3 offset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * punch;
+            transformToScale.localScale = originalScale + offset;
         }
         protected override void StopInternal()
         {

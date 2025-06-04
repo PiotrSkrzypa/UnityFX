@@ -13,8 +13,7 @@ namespace PSkrzypa.UnityFX
 
         bool originalState;
 
-
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        public override void Initialize()
         {
             if (componentToEnable == null)
             {
@@ -22,19 +21,19 @@ namespace PSkrzypa.UnityFX
                 return;
             }
             originalState = componentToEnable.enabled;
-            componentToEnable.enabled = targetState;
-            await UniTask.CompletedTask;
         }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            if (componentToEnable == null)
+            if (progress == 0f)
             {
-                Debug.LogWarning("[EnableComponentTweenAnimation] componentToEnable is null.");
-                return;
+                componentToEnable.enabled = originalState;
             }
-            componentToEnable.enabled = originalState;
-            await UniTask.CompletedTask;
+            if (progress == 1f)
+            {
+                componentToEnable.enabled = targetState;
+            }
         }
+
         protected override void StopInternal()
         {
             if (componentToEnable != null)

@@ -13,37 +13,52 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private List<Renderer> meshRenderers;
         [SerializeField][SerializeReference] private List<MaterialPropertyBlockParameter> parametersToAnimate;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        public override void Initialize()
         {
-            if (meshRenderers == null || parametersToAnimate == null) return;
-
-            List<UniTask> allTasks = new();
-
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
-            foreach (var renderer in meshRenderers)
-            {
-                MaterialPropertyBlock block = new MaterialPropertyBlock();
-                Renderer rendererTmp = renderer;
-                renderer.GetPropertyBlock(block);
-
-                var sequence = LSequence.Create();
-                foreach (var param in parametersToAnimate)
-                {
-                    param.SetDefaultValue(rendererTmp, block);
-                    sequence.Join(param.CreateMotion(block, calculatedDuration, Timing.TimeScaleIndependent));
-                }
-                sequence.Append(LMotion.Create(0f, 1f, calculatedDuration)
-                    .WithScheduler(Timing.GetScheduler())
-                    .WithEase(Ease.OutQuad)
-                    .Bind(block, (x, block) => rendererTmp.SetPropertyBlock(block)));
-                allTasks.Add(sequence.Run().ToUniTask(cancellationToken));
-            }
-            await UniTask.WhenAll(allTasks);
+            base.Initialize();
         }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            await UniTask.CompletedTask;
+            
         }
+
+        //protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        //{
+        //    if (meshRenderers == null || parametersToAnimate == null) return;
+
+        //    List<UniTask> allTasks = new();
+
+        //    float calculatedDuration = GetCalculatedDuration(playbackSpeed);
+        //    float from = playbackSpeed.speed > 0 ? 0f : 1f;
+        //    float to = playbackSpeed.speed > 0 ? 1f : 0f;
+        //    foreach (var renderer in meshRenderers)
+        //    {
+        //        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        //        Renderer rendererTmp = renderer;
+        //        renderer.GetPropertyBlock(block);
+
+        //        var sequence = LSequence.Create();
+        //        foreach (var param in parametersToAnimate)
+        //        {
+        //            param.SetDefaultValue(rendererTmp, block);
+        //            sequence.Join(param.CreateMotion(block, calculatedDuration, Timing.TimeScaleIndependent));
+        //        }
+        //        sequence.Append(LMotion.Create(from, to, calculatedDuration)
+        //            .WithScheduler(Timing.GetScheduler())
+        //            .WithEase(Ease.OutQuad)
+        //            .Bind(block, (t, block) =>
+        //            {
+        //                progress = t;
+        //                rendererTmp.SetPropertyBlock(block);
+        //            }));
+        //        allTasks.Add(sequence.Run().ToUniTask(cancellationToken));
+        //    }
+        //    await UniTask.WhenAll(allTasks);
+        //}
+        //protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        //{
+        //    await UniTask.CompletedTask;
+        //}
         protected override void StopInternal()
         {
             foreach (var renderer in meshRenderers)

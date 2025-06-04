@@ -4,6 +4,7 @@ using LitMotion;
 using Cysharp.Threading.Tasks;
 using System.Threading;
 using System.Collections.Generic;
+using static LitMotion.LMotion;
 
 namespace PSkrzypa.UnityFX
 {
@@ -17,70 +18,29 @@ namespace PSkrzypa.UnityFX
         [SerializeField] Vector3 movementShakeMagnitude;
         [SerializeField] float zRotationShakeMagnitude;
 
+        Camera camera;
+        Transform cameraTransform;
         Vector3 originalPosiiton;
         Vector3 originalRotation;
+        Vector3 rotationMagnitude;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        public override void Initialize()
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
-            Camera camera = Camera.main;
+            camera = Camera.main;
+            cameraTransform = camera.transform;
+            rotationMagnitude = new Vector3(0, 0, zRotationShakeMagnitude);
             originalPosiiton = camera.transform.localPosition;
             originalRotation = camera.transform.localEulerAngles;
-            List<UniTask> tasks = new List<UniTask>();
-            var scheduler = Timing.GetScheduler();
-            if (movementShakeMagnitude != Vector3.zero)
-            {
-                UniTask uniTask = LMotion.Shake.Create(originalPosiiton, movementShakeMagnitude, calculatedDuration)
-                .WithFrequency(frequency)
-                .WithDampingRatio(damping)
-                .WithEase(easeType)
-                .WithScheduler(scheduler)
-                .Bind(camera.transform, (v, tr) => tr.localPosition = v)
-                .ToUniTask(cancellationToken);
-                tasks.Add(uniTask);
-            }
-            if (zRotationShakeMagnitude != 0)
-            {
-                Vector3 rotationMagnitude = new Vector3(0, 0, zRotationShakeMagnitude);
-                UniTask uniTask = LMotion.Shake.Create(originalRotation, rotationMagnitude, calculatedDuration)
-                .WithFrequency(frequency)
-                .WithDampingRatio(damping)
-                .WithEase(easeType)
-                .WithScheduler(scheduler)
-                .Bind(camera.transform, (v, tr) => tr.localEulerAngles = v)
-                .ToUniTask(cancellationToken);
-                tasks.Add(uniTask);
-            }
-            await UniTask.WhenAll(tasks);
         }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
-            Camera camera = Camera.main;
-            List<UniTask> tasks = new List<UniTask>();
-            var scheduler = Timing.GetScheduler();
-            if (movementShakeMagnitude != Vector3.zero)
-            {
-                UniTask uniTask = LMotion.Shake.Create(originalPosiiton, movementShakeMagnitude, calculatedDuration)
-                .WithFrequency(frequency)
-                .WithDampingRatio(damping)
-                .WithScheduler(scheduler)
-                .Bind(camera.transform, (v, tr) => tr.localPosition = v)
-                .ToUniTask();
-                tasks.Add(uniTask);
-            }
-            if (zRotationShakeMagnitude != 0)
-            {
-                Vector3 rotationMagnitude = new Vector3(0, 0, zRotationShakeMagnitude);
-                UniTask uniTask = LMotion.Shake.Create(originalRotation, rotationMagnitude, calculatedDuration)
-                .WithFrequency(frequency)
-                .WithDampingRatio(damping)
-                .WithScheduler(scheduler)
-                .Bind(camera.transform, (v, tr) => tr.localEulerAngles = v)
-                .ToUniTask();
-                tasks.Add(uniTask);
-            }
-            await UniTask.WhenAll(tasks);
+            float angularFrequency = (frequency - 0.5f) * Mathf.PI;
+            float dampingFactor = damping * frequency / (2f * Mathf.PI);
+            Vector3 positionOffset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * movementShakeMagnitude;
+            Vector3 rotationOffset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * rotationMagnitude;
+            cameraTransform.localPosition = originalPosiiton + positionOffset;
+            cameraTransform.localEulerAngles = originalRotation + rotationOffset;
+
         }
 
     }

@@ -14,47 +14,18 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private Vector3 startingPosition;
         [SerializeField] private Vector3 targetPosition;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            if (transformToMove == null)
-                return;
-
-            Vector3 fromPosition = playbackSpeed.speed > 0 ? startingPosition : targetPosition;
-            Vector3 toPosition = playbackSpeed.speed > 0 ? targetPosition : startingPosition;
             if (useLocalSpace)
             {
-                transformToMove.localPosition = fromPosition;
+                transformToMove.localPosition = Vector3.LerpUnclamped(startingPosition, targetPosition, progress);
             }
             else
             {
-                transformToMove.position = fromPosition;
+                transformToMove.position = Vector3.LerpUnclamped(startingPosition, targetPosition, progress);
             }
-            var scheduler = Timing.GetScheduler();
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
-            var morionBuilder = LMotion.Create(fromPosition, toPosition, calculatedDuration)
-                    .WithEase(Ease.OutQuad)
-                    .WithScheduler(scheduler);
-            var handle = useLocalSpace ? morionBuilder.Bind(transformToMove, (x, t) => t.localPosition = x) :
-                    morionBuilder.Bind(transformToMove, (x, t) => t.position = x);
-
-            await handle.ToUniTask(cancellationToken);
         }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            if (transformToMove == null)
-                return;
 
-            Vector3 currentPosition = useLocalSpace ? transformToMove.localPosition : transformToMove.position;
-            var scheduler = Timing.GetScheduler();
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
-            var morionBuilder = LMotion.Create(currentPosition, startingPosition, calculatedDuration)
-                    .WithEase(Ease.OutQuad)
-                    .WithScheduler(scheduler);
-            var handle = useLocalSpace ? morionBuilder.Bind(transformToMove, (x, t) => t.localPosition = x) :
-                    morionBuilder.Bind(transformToMove, (x, t) => t.position = x);
-
-            await handle.ToUniTask();
-        }
         private void ResetPosition()
         {
             if (useLocalSpace)

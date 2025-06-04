@@ -12,52 +12,17 @@ namespace PSkrzypa.UnityFX
         [SerializeField] float startIntensity = 0f;
         [SerializeField] float targetIntensity = 1f;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        public override void Initialize()
         {
             if (light == null)
             {
-                Debug.LogWarning("[LightTweenAnimation] Light reference is null.");
+                Debug.LogWarning("[LightTweenAnimation] light is null.");
                 return;
             }
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
-            light.intensity = startIntensity;
-
-            float elapsed = 0f;
-
-            while (elapsed < calculatedDuration)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    return;
-
-                float t = elapsed / calculatedDuration;
-                light.intensity = Mathf.Lerp(startIntensity, targetIntensity, t);
-                await UniTask.Yield(PlayerLoopTiming.Update);
-
-                elapsed += Timing.TimeScaleIndependent ? Time.unscaledDeltaTime : Time.deltaTime;
-            }
-            light.intensity = targetIntensity;
         }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            if (light == null)
-            {
-                Debug.LogWarning("[LightTweenAnimation] Light reference is null.");
-                return;
-            }
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
-            float currentIntensity = light.intensity;
-
-            float elapsed = 0f;
-
-            while (elapsed < calculatedDuration)
-            {
-                float t = elapsed / calculatedDuration;
-                light.intensity = Mathf.Lerp(currentIntensity, startIntensity, t);
-                await UniTask.Yield(PlayerLoopTiming.Update);
-
-                elapsed += Timing.TimeScaleIndependent ? Time.unscaledDeltaTime : Time.deltaTime;
-            }
-            light.intensity = startIntensity;
+            light.intensity = Mathf.LerpUnclamped(startIntensity, targetIntensity, progress);
         }
 
         protected override void StopInternal()

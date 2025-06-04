@@ -11,6 +11,15 @@ namespace PSkrzypa.UnityFX
     {
         [SerializeField] VisualEffect visualEffect;
 
+        protected override void Update(float progress)
+        {
+            if (progress == 0)
+            {
+                visualEffect.Reinit();
+                visualEffect.Play();
+            }
+        }
+
         public override void Initialize()
         {
             base.Initialize();
@@ -20,19 +29,9 @@ namespace PSkrzypa.UnityFX
         {
             visualEffect.Stop();
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void ResetInternal()
         {
-            visualEffect.Reinit();
-            visualEffect.playRate = playbackSpeed.speed;
-            visualEffect.Play();
-            await UniTask.CompletedTask;
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            visualEffect.Reinit();
-            visualEffect.playRate = playbackSpeed.rewindSpeed;
-            visualEffect.Play();
-            await UniTask.CompletedTask;
+            visualEffect.Stop();
         }
     }
 }

@@ -6,6 +6,7 @@ namespace PSkrzypa.UnityFX
 {
     public interface IFXComponent
     {
+        float Progress { get; }
         FXTiming Timing { get; }
         bool CanPlayWhenAlreadyPlaying { get; }
         bool RewindOnCancel { get; }

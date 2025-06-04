@@ -14,24 +14,9 @@ namespace PSkrzypa.UnityFX
         [SerializeField] float startAlpha;
         [SerializeField] float targetAlpha;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
-            float fromAlpha = playbackSpeed.speed > 0 ? startAlpha : targetAlpha;
-            float toAlpha = playbackSpeed.speed > 0 ? targetAlpha : startAlpha;
-            var handle = LMotion.Create(fromAlpha, toAlpha, calculatedDuration)
-                .WithEase(LitMotion.Ease.OutQuad).WithScheduler(Timing.GetScheduler())
-                .BindToAlpha(targetCanvasGroup);
-            await handle.ToUniTask(cancellationToken);
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            float currentAlpha = targetCanvasGroup.alpha;
-            float calculatedDuration = Timing.Duration * Mathf.InverseLerp(startAlpha,targetAlpha, currentAlpha) / Mathf.Abs(playbackSpeed.rewindSpeed);
-            var handle = LMotion.Create(currentAlpha, startAlpha, calculatedDuration)
-                .WithEase(LitMotion.Ease.OutQuad).WithScheduler(Timing.GetScheduler())
-                .BindToAlpha(targetCanvasGroup);
-            await handle.ToUniTask();
+            targetCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, progress);
         }
         protected override void StopInternal()
         {

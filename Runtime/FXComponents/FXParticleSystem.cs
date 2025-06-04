@@ -10,6 +10,15 @@ namespace PSkrzypa.UnityFX
     {
         [SerializeField] ParticleSystem particleSystem;
 
+        protected override void Update(float progress)
+        {
+            if(progress == 0)
+            {
+                particleSystem.time = 0;
+                particleSystem.Play();
+            }
+        }
+
         public override void Initialize()
         {
             particleSystem.Stop();
@@ -18,17 +27,9 @@ namespace PSkrzypa.UnityFX
         {
             particleSystem.Stop();
         }
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void ResetInternal()
         {
-            await UniTask.Yield();
-            particleSystem.time = 0;
-            particleSystem.Play();
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            await UniTask.Yield();
-            particleSystem.time = 0;
-            particleSystem.Play();
+            particleSystem.Stop();
         }
     }
 }

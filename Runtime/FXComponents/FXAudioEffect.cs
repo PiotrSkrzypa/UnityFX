@@ -12,15 +12,12 @@ namespace PSkrzypa.UnityFX
         [SerializeField] string uiAudioClipKey;
         [SerializeField] bool isUISound;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            AudioSource.PlayClipAtPoint(audioClip, Vector3.zero);
-            await UniTask.CompletedTask;
-        }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
-        {
-            // Audio effects typically do not reverse, so this can be left empty or throw an exception if needed.
-            await UniTask.CompletedTask;
+            if(progress == 1f)
+            {
+                AudioSource.PlayClipAtPoint(audioClip, Vector3.zero);
+            }
         }
     }
 }

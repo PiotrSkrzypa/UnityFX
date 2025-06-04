@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using LitMotion;
 using System.Threading;
+using DG.Tweening;
 
 namespace PSkrzypa.UnityFX
 {
@@ -19,40 +20,45 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private Vector3 punch;
         Vector3 originalRotation;
 
-        protected override async UniTask PlayInternal(CancellationToken cancellationToken, PlaybackSpeed playbackSpeed)
+        public override void Initialize()
         {
-            var scheduler = Timing.GetScheduler();
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.speed);
-            originalRotation = useLocalSpace ? transformToRotate.localEulerAngles : transformToRotate.eulerAngles;
-
-            var motionBuilder = LMotion.Punch.Create(originalRotation, punch, calculatedDuration)
-                            .WithFrequency(frequency)
-                            .WithDampingRatio(damping)
-                            .WithScheduler(scheduler);
-            UniTask uniTask = useLocalSpace ?
-                motionBuilder.Bind(transformToRotate, (v, tr) => transformToRotate.localEulerAngles = v)
-                .ToUniTask(cancellationToken) :
-               motionBuilder.Bind(transformToRotate, (v, tr) => transformToRotate.eulerAngles = v)
-                .ToUniTask(cancellationToken);
-
-            await uniTask;
+            if (useLocalSpace)
+            {
+                originalRotation = transformToRotate.localEulerAngles;
+            }
+            else
+            {
+                originalRotation = transformToRotate.eulerAngles;
+            }
         }
-        protected override async UniTask Rewind(PlaybackSpeed playbackSpeed)
+        protected override void Update(float progress)
         {
-            var scheduler = Timing.GetScheduler();
-            float calculatedDuration = Timing.Duration / Mathf.Abs(playbackSpeed.rewindSpeed);
-            var motionBuilder = LMotion.Punch.Create(originalRotation, punch, calculatedDuration)
-                            .WithFrequency(frequency)
-                            .WithDampingRatio(damping)
-                            .WithScheduler(scheduler);
-            UniTask uniTask = useLocalSpace ?
-                motionBuilder.Bind(transformToRotate, (v, tr) => transformToRotate.localEulerAngles = v)
-                .ToUniTask() :
-               motionBuilder.Bind(transformToRotate, (v, tr) => transformToRotate.eulerAngles = v)
-                .ToUniTask();
 
-            await uniTask;
+            if (progress == 1f || progress == 0f)
+            {
+                if (useLocalSpace)
+                {
+                    transformToRotate.localEulerAngles = originalRotation;
+                }
+                else
+                {
+                    transformToRotate.eulerAngles = originalRotation;
+                }
+                return;
+            }
+            float angularFrequency = (frequency - 0.5f) * Mathf.PI;
+            float dampingFactor = damping * frequency / (2f * Mathf.PI);
+            Vector3 offset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * punch;
+            if (useLocalSpace)
+            {
+                transformToRotate.localEulerAngles = originalRotation + offset;
+            }
+            else
+            {
+                transformToRotate.eulerAngles = originalRotation + offset;
+            }
         }
+
         protected override void StopInternal()
         {
             if (useLocalSpace)

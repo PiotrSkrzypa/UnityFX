@@ -9,15 +9,43 @@ namespace PSkrzypa.UnityFX
     {
         public float speed;
         public float rewindSpeed;
-        public float SpeedAbs { get; private set; }
-        public float RewindSpeedAbs { get; private set; }
-        
+        public float SpeedAbs
+        {
+            get
+            {
+                if (!initialized)
+                {
+                    speedAbs = Mathf.Abs(speed);
+                }
+                return speedAbs;
+            }
+            private set => speedAbs = value;
+        }
+        public float RewindSpeedAbs
+        {
+            get
+            {
+                if (!initialized)
+                {
+                    rewindSpeedAbs = Mathf.Abs(rewindSpeed);
+                }
+                return rewindSpeedAbs;
+            }
+            private set => rewindSpeedAbs = value;
+        }
+        bool initialized;
+        float speedAbs;
+        float rewindSpeedAbs;
+
         public PlaybackSpeed(float speed, float rewindSpeed)
         {
             this.speed = speed;
             this.rewindSpeed = rewindSpeed;
-            SpeedAbs = Mathf.Abs(speed);
-            RewindSpeedAbs = Mathf.Abs(rewindSpeed);
+            initialized = true;
+            speedAbs = Mathf.Abs(speed);
+            rewindSpeedAbs = Mathf.Abs(rewindSpeed);
+            SpeedAbs = speedAbs;
+            RewindSpeedAbs = rewindSpeedAbs;
         }
 
 
