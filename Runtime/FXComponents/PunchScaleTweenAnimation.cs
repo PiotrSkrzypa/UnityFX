@@ -9,6 +9,7 @@ namespace PSkrzypa.UnityFX
     [Serializable]
     public class PunchScaleTweenAnimation : BaseFXComponent
     {
+        private const float PI = Mathf.PI;
         [SerializeField] private Transform transformToScale;
         [SerializeField] private Vector3 punch = Vector3.one * 0.5f;
         [SerializeField] private float damping = 0.5f;
@@ -28,9 +29,14 @@ namespace PSkrzypa.UnityFX
                 transformToScale.localScale = originalScale;
                 return;
             }
-            float angularFrequency = (frequency - 0.5f) * Mathf.PI;
-            float dampingFactor = damping * frequency / (2f * Mathf.PI);
-            Vector3 offset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * punch;
+            float t = (progress - 0.5f) * 2f;
+            float angularFrequency = PI * frequency;
+            float dampingFactor = damping * frequency / (2f * PI);
+
+            float oscillation = Mathf.Sin(progress * angularFrequency);
+            float decay = Mathf.Exp(-dampingFactor * Mathf.Abs(t));
+
+            Vector3 offset = oscillation * decay * punch;
             transformToScale.localScale = originalScale + offset;
         }
         protected override void StopInternal()

@@ -9,6 +9,7 @@ namespace PSkrzypa.UnityFX
     [Serializable]
     public class PunchPositionTweenAnimation : BaseFXComponent
     {
+        private const float PI = Mathf.PI;
         public int Frequency { get => frequency; set => frequency = value; }
         public float Damping { get => damping; set => damping = value; }
 
@@ -48,9 +49,14 @@ namespace PSkrzypa.UnityFX
                 }
                 return;
             }
-            float angularFrequency = (frequency - 0.5f) * Mathf.PI;
-            float dampingFactor = damping * frequency / (2f * Mathf.PI);
-            Vector3 offset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * punch;
+            float t = (progress - 0.5f) * 2f;
+            float angularFrequency = PI * frequency;
+            float dampingFactor = damping * frequency / (2f * PI);
+
+            float oscillation = Mathf.Sin(progress * angularFrequency);
+            float decay = Mathf.Exp(-dampingFactor * Mathf.Abs(t));
+
+            Vector3 offset = oscillation * decay * punch;
             if (useLocalSpace)
             {
                 transformToMove.localPosition = originalPosition + offset;

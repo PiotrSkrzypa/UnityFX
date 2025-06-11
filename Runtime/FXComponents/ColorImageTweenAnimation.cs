@@ -17,7 +17,7 @@ namespace PSkrzypa.UnityFX
 
         protected override void Update(float progress)
         {
-            imageToColor.color = Color.Lerp(startColor, targetColor, progress);
+            imageToColor.color = Color.LerpUnclamped(startColor, targetColor, progress);
         }
 
         protected override void StopInternal()

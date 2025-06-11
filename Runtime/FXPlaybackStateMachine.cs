@@ -64,9 +64,6 @@ namespace PSkrzypa.UnityFX
             }
 
             CurrentState = to;
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[FX] Transitioned to state: {to}");
-#endif
             return true;
         }
 
