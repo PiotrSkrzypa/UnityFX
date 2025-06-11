@@ -13,7 +13,6 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private Volume volume;
         [SerializeField] private float startWeight = 0f;
         [SerializeField] private float targetWeight = 1f;
-        [SerializeField] private Ease ease = Ease.OutQuad;
 
         protected override void Update(float progress)
         {

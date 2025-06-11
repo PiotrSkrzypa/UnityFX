@@ -17,7 +17,6 @@ namespace PSkrzypa.UnityFX
         [SerializeField] private bool useLocalSpace = true;
         [SerializeField] private float damping = 0.5f;
         [SerializeField] private int frequency = 10;
-        [SerializeField] private Ease ease = Ease.Linear;
         [SerializeField] private Vector3 punch;
 
         Vector3 originalPosition;

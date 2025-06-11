@@ -11,10 +11,10 @@ namespace PSkrzypa.UnityFX
     [Serializable]
     public class FXCameraShake : BaseFXComponent
     {
+        private const float PI = Mathf.PI;
         [SerializeField] int frequency = 10;
         [SerializeField] float damping = 0.5f;
         [SerializeField] bool fadeOut;
-        [SerializeField] Ease easeType = Ease.OutQuad;
         [SerializeField] Vector3 movementShakeMagnitude;
         [SerializeField] float zRotationShakeMagnitude;
 
@@ -34,10 +34,15 @@ namespace PSkrzypa.UnityFX
         }
         protected override void Update(float progress)
         {
-            float angularFrequency = (frequency - 0.5f) * Mathf.PI;
-            float dampingFactor = damping * frequency / (2f * Mathf.PI);
-            Vector3 positionOffset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * movementShakeMagnitude;
-            Vector3 rotationOffset = Mathf.Cos(angularFrequency * progress) * Mathf.Pow(Mathf.Epsilon, -dampingFactor * progress) * rotationMagnitude;
+            float t = (progress - 0.5f) * 2f;
+            float angularFrequency = PI * frequency;
+            float dampingFactor = damping * frequency / (2f * PI);
+
+            float oscillation = Mathf.Sin(progress * angularFrequency);
+            float decay = Mathf.Exp(-dampingFactor * Mathf.Abs(t));
+
+            Vector3 positionOffset =  oscillation * decay * movementShakeMagnitude;
+            Vector3 rotationOffset =  oscillation * decay * rotationMagnitude;
             cameraTransform.localPosition = originalPosiiton + positionOffset;
             cameraTransform.localEulerAngles = originalRotation + rotationOffset;
 
