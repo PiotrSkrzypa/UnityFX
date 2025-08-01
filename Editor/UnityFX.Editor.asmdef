@@ -3,9 +3,12 @@
     "rootNamespace": "",
     "references": [
         "Alchemy.Editor",
-        "UnityFX"
+        "UnityFX",
+        "LitMotion"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
