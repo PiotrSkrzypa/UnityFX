@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using Unity.Collections;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace PSkrzypa.UnityFX.V2.Editor
+namespace PSkrzypa.UnityFX.Editor
 {
     [CustomPropertyDrawer(typeof(FXAnimationSettings))]
     public class FXAnimationSettingsDrawer : PropertyDrawer

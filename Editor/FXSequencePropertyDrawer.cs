@@ -3,10 +3,9 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using System.Collections.Generic;
 using UnityEngine;
-using LitMotion;
 using System.Reflection;
 
-namespace PSkrzypa.UnityFX.V2.Editor
+namespace PSkrzypa.UnityFX.Editor
 {
     [CustomPropertyDrawer(typeof(FXSequence))]
     public sealed class FXSequencePropertyDrawer : PropertyDrawer

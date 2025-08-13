@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PSkrzypa.UnityFX.V2.Editor
+namespace PSkrzypa.UnityFX.Editor
 {
     public class FXComponentView : VisualElement
     {

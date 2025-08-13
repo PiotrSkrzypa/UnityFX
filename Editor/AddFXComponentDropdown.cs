@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
-namespace PSkrzypa.UnityFX.V2.Editor
+namespace PSkrzypa.UnityFX.Editor
 {
     public sealed class AddFXComponentDropdown : AdvancedDropdown
     {
