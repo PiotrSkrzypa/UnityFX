@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using LitMotion;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace PSkrzypa.UnityFX
 
         public sealed override void Play(PlaybackDirection playbackDirection = PlaybackDirection.Forward, float playbackSpeedModifier = 1f)
         {
-            if(!isInitialized)
+            if (!isInitialized)
             {
                 Initialize();
                 isInitialized = true;
@@ -34,6 +35,7 @@ namespace PSkrzypa.UnityFX
             switch (playbackDirection)
             {
                 case PlaybackDirection.Forward:
+                    CancellationTokenCleanUp();
                     trackedHandle.PlaybackSpeed = settings.ForwardPlaybackSpeed * playbackSpeedModifier;
                     trackedHandle.Time = isPlaying ? trackedHandle.Time : 0f;
                     break;
@@ -76,7 +78,7 @@ namespace PSkrzypa.UnityFX
         }
         void OnLoopComplete(int loopCount)
         {
-            
+
         }
         void OnComplete()
         {
@@ -97,7 +99,17 @@ namespace PSkrzypa.UnityFX
             if (TrackedHandle.IsActive())
             {
                 PlayerLoopTiming playerLoopTiming = settings.TimescaleIndependent ? PlayerLoopTiming.TimeUpdate : PlayerLoopTiming.Update;
-                await UniTask.WaitUntil(() => TrackedHandle.Time < 0, playerLoopTiming, cancellationToken);
+                try
+                {
+                    await UniTask.WaitUntil(() => TrackedHandle.Time < 0, playerLoopTiming, cancellationToken);
+                }
+                catch (OperationCanceledException ex)
+                {
+                    if (ex.CancellationToken == cancellationToken)
+                    {
+                        return;
+                    }
+                }
                 OnRewindComplete();
             }
         }
