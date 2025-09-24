@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if USING_URP
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -24,4 +25,5 @@ namespace PSkrzypa.UnityFX
         }
 
     }
-}
+} 
+#endif
