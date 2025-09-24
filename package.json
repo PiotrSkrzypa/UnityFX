@@ -5,7 +5,6 @@
   "description": "Tools for adding special effects or feedbacks for your game. Transforms animation, screenshakes, playing sounds and more.",
   "unity": "2022.1",
   "dependencies": {
-    "com.unity.render-pipelines.universal": "14.0.8",
 	"com.cysharp.unitask": "2.5.10",
 	"com.annulusgames.alchemy": "2.0.1",
 	"com.annulusgames.lit-motion": "2.0.1",
