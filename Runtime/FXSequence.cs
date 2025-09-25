@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using LitMotion;
 using UnityEngine;
 using UnityEngine.Events;
