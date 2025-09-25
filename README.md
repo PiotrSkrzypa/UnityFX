@@ -24,7 +24,7 @@ https://github.com/annulusgames/LitMotion.git?path=src/LitMotion/Assets/LitMotio
 ```
 
 
-After installing dependencies you can import package in Unity with 
+Once you have installed DependencyResolver or manually installed the dependencies, you can import package in Unity with 
 the Unity Package Manager using this URL:
 
 ```
