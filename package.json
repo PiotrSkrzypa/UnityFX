@@ -5,14 +5,16 @@
   "description": "Tools for adding special effects or feedbacks for your game. Transforms animation, screenshakes, playing sounds and more.",
   "unity": "2022.1",
   "dependencies": {
-	"com.cysharp.unitask": "2.5.10",
-	"com.annulusgames.alchemy": "2.0.1",
-	"com.annulusgames.lit-motion": "2.0.1",
-	"com.annulusgames.lit-motion.animation": "2.0.1"
  },
   "author": {
     "name": "Piotr Skrzypa",
     "email": "skrzypapiotr144@gmail.com"
-  }
+  },
+  "git-dependencies": [
+    "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+	"https://github.com/annulusgames/Alchemy.git?path=/Alchemy/Assets/Alchemy",
+	"https://github.com/annulusgames/LitMotion.git?path=src/LitMotion/Assets/LitMotion",
+	"https://github.com/annulusgames/LitMotion.git?path=src/LitMotion/Assets/LitMotion.Animation"
+  ]
 }
 
